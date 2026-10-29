@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex">
+  <title>Admin — Target testlar</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .main { padding: 24px; }
+    .content { max-width: 1200px; }
+    .toolbar { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+    .toolbar input { max-width: 280px; }
+    .scores { white-space: nowrap; }
+    .scores span { display: inline-block; min-width: 22px; text-align: center; }
+    textarea.json { min-height: 380px; font-family: ui-monospace, Consolas, monospace; font-size: 13px; }
+    .answers td.ok { color: var(--ok); } .answers td.bad { color: var(--bad); }
+    .att { border: 1px solid var(--line); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+    .warnrow td { background: var(--warn-soft); }
+  </style>
+</head>
+<body>
+
+<div id="authView" class="auth-wrap hidden">
+  <form class="auth-card" id="loginForm">
+    <h1>Admin panel</h1>
+    <div class="muted small" style="margin-bottom:16px">Supabase'da yaratilgan admin email va parol</div>
+    <label class="field"><span>Email</span><input type="email" id="email" required autocomplete="username"></label>
+    <label class="field"><span>Parol</span><input type="password" id="pass" required autocomplete="current-password"></label>
+    <div id="loginMsg"></div>
+    <button class="btn primary" style="width:100%" type="submit">Kirish</button>
+  </form>
+</div>
+
+<div id="appView" class="hidden">
+  <div class="topbar">
+    <button class="btn sm" id="menuBtn" type="button">☰ Menyu</button><b class="small">Admin panel</b>
+  </div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="head"><b>Admin panel</b><span class="muted small" id="who"></span></div>
+      <nav>
+        <button class="nav-item active" data-v="students" type="button">👥 O'quvchilar</button>
+        <button class="nav-item" data-v="tests" type="button">📝 Testlar</button>
+      </nav>
+      <div class="foot"><a class="btn sm" href="index.html" target="_blank">Saytni ochish</a>
+        <button class="btn sm" id="logoutBtn" type="button">Chiqish</button></div>
+    </aside>
+    <div id="shade" class="shade hidden"></div>
+    <main class="main"><div class="content" id="content"></div></main>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="api.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id), esc = U.esc;
+  let sess = JSON.parse(U.store.get("tt_admin") || "null");
+  let data = null; // admin_summary
+  const testCache = {};
+
+  // ---------- kirish ----------
+  async function jwt() {
+    if (!sess) throw new Error("no_session");
+    if (Date.now() / 1000 > sess.expires_at - 60) {
+      const r = await API.authRefresh(sess.refresh_token);
+      sess = { access_token: r.access_token, refresh_token: r.refresh_token, expires_at: r.expires_at || (Date.now() / 1000 + r.expires_in), email: sess.email };
+      U.store.set("tt_admin", JSON.stringify(sess));
+    }
+    return sess.access_token;
+  }
+  async function call(fn, args = {}) {
+    try {
+      const r = await API.rpc(fn, args, await jwt());
+      if (r && r.ok === false && r.error === "not_admin") { alert("Bu email admin emas."); logout(); }
+      return r;
+    } catch (e) {
+      if (e.message === "no_session" || e.status === 401) { logout(); }
+      throw e;
+    }
+  }
+  function logout() { U.store.del("tt_admin"); sess = null; location.reload(); }
+
+  $("loginForm").onsubmit = async e => {
+    e.preventDefault(); $("loginMsg").innerHTML = "";
+    try {
+      const r = await API.authLogin($("email").value.trim(), $("pass").value);
+      sess = { access_token: r.access_token, refresh_token: r.refresh_token, expires_at: r.expires_at || (Date.now() / 1000 + r.expires_in), email: r.user && r.user.email };
+      U.store.set("tt_admin", JSON.stringify(sess)); start();
+    } catch (err) { $("loginMsg").innerHTML = `<div class="msg err">Email yoki parol noto'g'ri.</div>`; }
+  };
+  $("logoutBtn").onclick = logout;
+
+  // menyu
+  document.querySelectorAll(".nav-item").forEach(b => b.onclick = () => {
+    document.querySelectorAll(".nav-item").forEach(x => x.classList.toggle("active", x === b));
+    closeMenu(); b.dataset.v === "tests" ? viewTests() : viewStudents();
+  });
+  function closeMenu() { $("sidebar").classList.remove("open"); $("shade").classList.add("hidden"); }
+  $("menuBtn").onclick = () => { $("sidebar").classList.add("open"); $("shade").classList.remove("hidden"); };
+  $("shade").onclick = closeMenu;
+
+  async function start() {
+    if (!sess) { $("authView").classList.remove("hidden"); return; }
+    $("authView").classList.add("hidden"); $("appView").classList.remove("hidden");
+    $("who").textContent = sess.email || "";
+    viewStudents();
+  }
+
+  async function load() { data = await call("admin_summary"); return data; }
+
+  // ---------- O'QUVCHILAR ----------
+  async function viewStudents() {
+    $("content").innerHTML = `<div class="card muted">Yuklanmoqda...</div>`;
+    await load(); if (!data.ok) return;
+    const tests = data.tests;
+    const now = Date.now();
+    $("content").innerHTML = `
+      <div class="card">
+        <div class="toolbar">
+          <h2 style="margin:0">👥 O'quvchilar <span class="badge">${data.students.length}</span></h2><span class="space"></span>
+          <input type="search" id="q" placeholder="Ism yoki Telegram bo'yicha qidirish">
+          <button class="btn sm" id="csv" type="button">⬇ Excel (CSV)</button>
+          <button class="btn sm" id="refresh" type="button">↻ Yangilash</button>
+        </div>
+        <p class="muted small">Ballar: 1-, 2-, 3-urinish. ⚠ belgisi: test paytida boshqa oynaga chiqqan. 🟢: oxirgi 2 daqiqada saytda bo'lgan.</p>
+        <div class="table-wrap"><table id="tbl">
+          <tr><th>#</th><th>O'quvchi</th><th>Telegram</th><th>Ro'yxatdan o'tgan</th><th>Oxirgi faollik</th><th>Saytda jami</th><th>Kirishlar</th>
+            ${tests.map(t => `<th title="${esc(t.section)}">${esc(t.title)}</th>`).join("")}</tr>
+          ${data.students.map((s, i) => {
+            const online = s.last_seen && (now - new Date(s.last_seen)) < 120000;
+            return `<tr class="click" data-id="${s.id}" data-q="${esc((s.first_name + " " + s.last_name + " " + s.telegram).toLowerCase())}">
+              <td>${i + 1}</td><td><b>${esc(s.first_name)} ${esc(s.last_name)}</b> ${online ? "🟢" : ""}</td>
+              <td><a href="https://t.me/${esc(s.telegram)}" target="_blank" onclick="event.stopPropagation()">@${esc(s.telegram)}</a></td>
+              <td>${U.dt(s.created_at)}</td><td>${U.dt(s.last_seen)}</td><td>${U.dur(s.online_sec)}</td><td>${s.visits}</td>
+              ${tests.map(t => { const x = s.tests[t.id]; if (!x) return `<td class="muted">—</td>`;
+                return `<td class="scores">${x.scores.map(v => `<span>${v == null ? "·" : v}</span>`).join(" ")}
+                  <span class="muted small">/${x.total ?? t.count}</span>${x.away ? ` <span title="Boshqa oynaga chiqishlar">⚠${x.away}</span>` : ""}</td>`; }).join("")}
+            </tr>`; }).join("")}
+        </table></div>
+        ${data.students.length ? "" : `<p class="muted">Hali hech kim ro'yxatdan o'tmagan.</p>`}
+      </div>`;
+    $("q").oninput = () => { const v = $("q").value.toLowerCase(); document.querySelectorAll("#tbl tr[data-q]").forEach(r => r.classList.toggle("hidden", !r.dataset.q.includes(v))); };
+    $("refresh").onclick = viewStudents;
+    $("csv").onclick = exportCsv;
+    document.querySelectorAll("#tbl tr.click").forEach(r => r.onclick = () => viewStudent(r.dataset.id));
+  }
+
+  function exportCsv() {
+    const tests = data.tests;
+    const head = ["Ism", "Familiya", "Telegram", "Ro'yxatdan o'tgan", "Oxirgi faollik", "Saytda jami (daqiqa)", "Kirishlar"]
+      .concat(...tests.map(t => [`${t.title} 1`, `${t.title} 2`, `${t.title} 3`, `${t.title} chiqishlar`]));
+    const rows = data.students.map(s => [s.first_name, s.last_name, "@" + s.telegram, U.dt(s.created_at), U.dt(s.last_seen),
+      Math.round(s.online_sec / 60), s.visits].concat(...tests.map(t => { const x = s.tests[t.id] || { scores: [], away: "" };
+        return [x.scores[0] ?? "", x.scores[1] ?? "", x.scores[2] ?? "", x.away ?? ""]; })));
+    const csv = [head].concat(rows).map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "oquvchilar_" + new Date().toISOString().slice(0, 10) + ".csv"; a.click();
+  }
+
+  async function getTest(id) {
+    if (!testCache[id]) { const r = await call("admin_get_test", { p_id: id }); testCache[id] = r && r.ok ? r.test : null; }
+    return testCache[id];
+  }
+
+  // ---------- BITTA O'QUVCHI ----------
+  async function viewStudent(id) {
+    $("content").innerHTML = `<div class="card muted">Yuklanmoqda...</div>`;
+    const r = await call("admin_student", { p_id: id }); if (!r.ok) return;
+    const s = r.student;
+    for (const a of r.attempts) await getTest(a.test_id);
+    const totalOnline = r.visits.reduce((x, v) => x + v.sec, 0);
+    $("content").innerHTML = `
+      <div class="card">
+        <div class="row"><button class="btn sm" id="back" type="button">← Ro'yxatga</button><span class="space"></span>
+          <button class="btn sm" id="pinBtn" type="button">🔑 PIN'ni tiklash</button></div>
+        <h2 style="margin-top:12px">${esc(s.first_name)} ${esc(s.last_name)}</h2>
+        <a href="https://t.me/${esc(s.telegram)}" target="_blank">@${esc(s.telegram)}</a>
+        <span class="muted small"> · ro'yxatdan o'tgan: ${U.dt(s.created_at)}</span>
+        <div id="pinBox"></div>
+        <div class="stats">
+          <div class="stat"><span class="muted small">Saytda jami</span><b>${U.dur(totalOnline)}</b></div>
+          <div class="stat"><span class="muted small">Kirishlar soni</span><b>${r.visits.length}</b></div>
+          <div class="stat"><span class="muted small">Urinishlar</span><b>${r.attempts.length}</b></div>
+          <div class="stat"><span class="muted small">Oynadan chiqishlar</span><b>${r.attempts.reduce((x, a) => x + a.away_count, 0)}</b></div>
+        </div>
+      </div>
+      <div class="card"><h2 style="font-size:17px">📝 Urinishlar</h2>
+        ${r.attempts.length ? r.attempts.map(a => attemptHtml(a)).join("") : `<p class="muted">Hali test ishlamagan.</p>`}
+      </div>
+      <div class="card"><h2 style="font-size:17px">🕒 Saytga kirishlar</h2>
+        <div class="table-wrap"><table><tr><th>Sana</th><th>Kirdi</th><th>Chiqdi (oxirgi faollik)</th><th>Davomiyligi</th></tr>
+        ${r.visits.map(v => `<tr><td>${U.dt(v.started_at).slice(0, 10)}</td><td>${U.time(v.started_at)}</td><td>${U.time(v.last_seen)}</td><td>${U.dur(v.sec)}</td></tr>`).join("")}
+        </table></div>
+        ${r.visits.length ? "" : `<p class="muted">Ma'lumot yo'q.</p>`}
+      </div>`;
+    $("back").onclick = viewStudents;
+    $("pinBtn").onclick = () => {
+      $("pinBox").innerHTML = `<div class="row" style="margin-top:12px"><input type="text" id="newPin" maxlength="4" inputmode="numeric" placeholder="Yangi PIN (4 raqam)" style="max-width:200px">
+        <button class="btn sm primary" id="savePin" type="button">Saqlash</button></div>`;
+      $("savePin").onclick = async () => {
+        const pin = $("newPin").value;
+        const x = await call("admin_reset_pin", { p_student: id, p_pin: pin });
+        $("pinBox").innerHTML = x.ok ? `<div class="msg ok">Yangi PIN saqlandi: <b>${esc(pin)}</b>. O'quvchiga Telegram'da yuboring.</div>`
+                                     : `<div class="msg err">PIN 4 ta raqam bo'lishi kerak.</div>`;
+      };
+    };
+    document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
+      if (!confirm("Bu urinish o'chiriladi va o'quvchiga 1 ta qo'shimcha urinish ochiladi. Davom etasizmi?")) return;
+      await call("admin_delete_attempt", { p_attempt: b.dataset.del }); viewStudent(id);
+    });
+  }
+
+  function attemptHtml(a) {
+    const t = testCache[a.test_id], qs = t ? t.questions : [];
+    const qIndex = {}; qs.forEach((q, i) => qIndex[q.id] = { i, q });
+    const answers = (a.answers || []);
+    const fast = answers.filter(x => x.ms && x.ms < 3000).length;
+    return `<div class="att">
+      <div class="row"><b>${esc(a.title)} · ${a.attempt_no}-urinish</b><span class="space"></span>
+        ${a.finished_at ? `<span class="badge ${a.score / a.total >= .8 ? "ok" : a.score / a.total >= .5 ? "warn" : "bad"}">${a.score} / ${a.total}</span>` : `<span class="badge bad">tugallanmagan</span>`}
+        <button class="btn sm danger" data-del="${a.id}" type="button" title="Qo'shimcha urinish berish">O'chirish</button></div>
+      <div class="muted small" style="margin:6px 0">Boshladi: ${U.dt(a.started_at)} · Tugatdi: ${a.finished_at ? U.time(a.finished_at) : "—"} · Sarfladi: ${a.finished_at ? U.dur(a.sec) : "—"}</div>
+      ${a.away_count ? `<div class="msg warn small">⚠ Test oynasidan <b>${a.away_count}</b> marta chiqdi, jami <b>${U.dur(a.away_seconds)}</b>:
+        ${(a.away_events || []).map(e => `<br>• ${e.q ? e.q + "-savolda, " : ""}${U.time(e.left)} → ${U.time(e.back)} (${U.dur(e.sec)})`).join("")}</div>` : ""}
+      ${fast ? `<div class="msg warn small">⚡ ${fast} ta savolga 3 soniyadan tez javob bergan.</div>` : ""}
+      ${answers.length ? `<details><summary class="small">Savollar bo'yicha batafsil</summary>
+        <div class="table-wrap"><table class="answers"><tr><th>#</th><th>Savol</th><th>Javobi</th><th>Natija</th><th>Vaqt</th></tr>
+        ${answers.map(x => { const info = qIndex[x.q]; const q = info && info.q;
+          const opt = q && q.options.find(o => o.id === x.a);
+          return `<tr class="${x.ms && x.ms < 3000 ? "warnrow" : ""}"><td>${info ? info.i + 1 : "?"}</td><td>${esc(q ? q.prompt : x.q)}</td>
+            <td>${esc(opt ? opt.text : (x.a || "—"))}</td><td class="${x.ok ? "ok" : "bad"}">${x.ok ? "✓ to'g'ri" : "✗ xato"}</td><td>${U.dur(x.ms / 1000)}</td></tr>`; }).join("")}
+        </table></div></details>` : ""}
+    </div>`;
+  }
+
+  // ---------- TESTLAR ----------
+  const SAMPLE = {
+    id: "3-3", section: "3. Biznes menejer", section_order: 3, lesson_order: 3, title: "3. BM sozlamalari", published: true,
+    questions: [
+      { id: "q1", prompt: "Savol matni?", options: [{ id: "a", text: "Variant A" }, { id: "b", text: "Variant B" }, { id: "c", text: "Variant C" }, { id: "d", text: "Variant D" }],
+        correct_option_id: "b", explanation: "Nega B to'g'ri ekanining izohi." }
+    ]
+  };
+
+  async function viewTests() {
+    $("content").innerHTML = `<div class="card muted">Yuklanmoqda...</div>`;
+    await load(); if (!data.ok) return;
+    $("content").innerHTML = `
+      <div class="card">
+        <div class="toolbar"><h2 style="margin:0">📝 Testlar</h2><span class="space"></span>
+          <button class="btn sm primary" id="newBtn" type="button">+ Yangi test qo'shish</button></div>
+        <div class="table-wrap"><table>
+          <tr><th>ID</th><th>Bo'lim</th><th>Dars</th><th>Savollar</th><th>Holati</th><th></th></tr>
+          ${data.tests.map(t => `<tr><td>${esc(t.id)}</td><td>${esc(t.section)}</td><td>${esc(t.title)}</td><td>${t.count}</td>
+            <td>${t.published ? `<span class="badge ok">ko'rinadi</span>` : `<span class="badge">yashirin</span>`}</td>
+            <td class="row"><button class="btn sm" data-edit="${esc(t.id)}" type="button">Tahrirlash</button>
+              <button class="btn sm" data-pub="${esc(t.id)}" data-val="${t.published ? 0 : 1}" type="button">${t.published ? "Yashirish" : "Ko'rsatish"}</button></td></tr>`).join("")}
+        </table></div>
+      </div>
+      <div class="card hidden" id="editor">
+        <h2 style="font-size:17px" id="edTitle">Test</h2>
+        <p class="muted small">Claude tayyorlab bergan JSON'ni shu yerga qo'ying va "Saqlash"ni bosing. Bir xil ID bilan saqlansa, eski test yangilanadi.
+          <b>Diqqat:</b> o'quvchilar ishlab bo'lgan testda savol ID'larini (q1, q2...) o'zgartirmang.</p>
+        <textarea class="json" id="json"></textarea>
+        <div id="edMsg"></div>
+        <div class="row"><button class="btn primary" id="saveBtn" type="button">Saqlash</button>
+          <button class="btn" id="cancelBtn" type="button">Bekor qilish</button></div>
+      </div>`;
+    const openEditor = (obj, title) => {
+      $("editor").classList.remove("hidden"); $("edTitle").textContent = title;
+      $("json").value = JSON.stringify(obj, null, 2); $("edMsg").innerHTML = ""; $("editor").scrollIntoView({ behavior: "smooth" });
+    };
+    $("newBtn").onclick = () => openEditor(SAMPLE, "Yangi test (namuna)");
+    document.querySelectorAll("[data-edit]").forEach(b => b.onclick = async () => {
+      delete testCache[b.dataset.edit]; const t = await getTest(b.dataset.edit); openEditor(t, "Tahrirlash: " + t.title);
+    });
+    document.querySelectorAll("[data-pub]").forEach(b => b.onclick = async () => {
+      await call("admin_set_published", { p_id: b.dataset.pub, p_published: b.dataset.val === "1" }); viewTests();
+    });
+    $("cancelBtn").onclick = () => $("editor").classList.add("hidden");
+    $("saveBtn").onclick = async () => {
+      let obj; try { obj = JSON.parse($("json").value); }
+      catch (e) { $("edMsg").innerHTML = `<div class="msg err">JSON formati xato: ${esc(e.message)}</div>`; return; }
+      const problems = validate(obj);
+      if (problems.length) { $("edMsg").innerHTML = `<div class="msg err">${problems.map(esc).join("<br>")}</div>`; return; }
+      const r = await call("admin_save_test", { p: obj });
+      if (r.ok) { delete testCache[obj.id]; $("edMsg").innerHTML = `<div class="msg ok">Saqlandi ✅</div>`; setTimeout(viewTests, 700); }
+      else $("edMsg").innerHTML = `<div class="msg err">Saqlanmadi: ${esc(r.error)}</div>`;
+    };
+  }
+
+  function validate(t) {
+    const p = [];
+    if (!t.id) p.push("id yozilmagan (masalan \"3-3\").");
+    if (!t.title) p.push("title yozilmagan.");
+    if (!Array.isArray(t.questions) || !t.questions.length) { p.push("questions bo'sh."); return p; }
+    const ids = new Set();
+    t.questions.forEach((q, i) => {
+      const n = i + 1;
+      if (!q.id) p.push(`${n}-savolda id yo'q.`); else if (ids.has(q.id)) p.push(`${n}-savol id'si takrorlangan: ${q.id}`); else ids.add(q.id);
+      if (!q.prompt) p.push(`${n}-savolda prompt (savol matni) yo'q.`);
+      if (!Array.isArray(q.options) || q.options.length < 2) p.push(`${n}-savolda kamida 2 ta variant bo'lsin.`);
+      else if (!q.options.some(o => o.id === q.correct_option_id)) p.push(`${n}-savolda correct_option_id variantlar ichida yo'q.`);
+    });
+    return p;
+  }
+
+  start();
+})();
+</script>
+</body>
+</html>
