@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="uz">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Target kursi — testlar</title>
+  <link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<!-- ================= KIRISH / RO'YXATDAN O'TISH ================= -->
+<div id="authView" class="auth-wrap hidden">
+  <div class="auth-card">
+    <h1 id="siteTitle">Target kursi — testlar</h1>
+    <div class="muted small">Darslar bo'yicha bilimingizni tekshiring</div>
+    <div class="tabs">
+      <button id="tabLogin" class="active" type="button">Kirish</button>
+      <button id="tabReg" type="button">Ro'yxatdan o'tish</button>
+    </div>
+
+    <form id="loginForm" autocomplete="on">
+      <label class="field"><span>Telegram username yoki link</span>
+        <input type="text" id="lTg" placeholder="@username yoki t.me/username" required></label>
+      <label class="field"><span>PIN (4 ta raqam)</span>
+        <input type="password" id="lPin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+      <div id="loginMsg"></div>
+      <button class="btn primary" style="width:100%" type="submit">Kirish</button>
+    </form>
+
+    <form id="regForm" class="hidden" autocomplete="on">
+      <label class="field"><span>Ism</span><input type="text" id="rFirst" required></label>
+      <label class="field"><span>Familiya</span><input type="text" id="rLast" required></label>
+      <label class="field"><span>Telegram username yoki link</span>
+        <input type="text" id="rTg" placeholder="@username yoki t.me/username" required></label>
+      <label class="field"><span>PIN o'ylab toping (4 ta raqam)</span>
+        <input type="password" id="rPin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+      <label class="field"><span>PIN'ni qayta kiriting</span>
+        <input type="password" id="rPin2" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+      <div class="msg warn small">PIN'ni eslab qoling. Unutsangiz, ustozga Telegram'da yozing.</div>
+      <div id="regMsg"></div>
+      <button class="btn primary" style="width:100%" type="submit">Ro'yxatdan o'tish</button>
+    </form>
+  </div>
+</div>
+
+<!-- ================= ASOSIY OYNA ================= -->
+<div id="appView" class="hidden">
+  <div class="topbar">
+    <button class="btn sm" id="menuBtn" type="button">☰ Menyu</button>
+    <b id="topTitle" class="small"></b>
+  </div>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar">
+      <div class="head">
+        <b id="sideTitle">Target kursi</b>
+        <span class="muted small" id="meName"></span>
+      </div>
+      <nav id="nav"></nav>
+      <div class="foot">
+        <button class="btn sm" id="historyBtn" type="button">📊 Natijalarim</button>
+        <button class="btn sm" id="logoutBtn" type="button">Chiqish</button>
+      </div>
+    </aside>
+    <div id="shade" class="shade hidden"></div>
+    <main class="main"><div class="content" id="content"></div></main>
+  </div>
+</div>
+
+<div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
+<script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
+<script src="config.js?v=3"></script>
+<script src="api.js?v=3"></script>
+<script>
+(function () {
+  const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
+  const $ = id => document.getElementById(id);
+  const esc = U.esc;
+  const ERR = {
+    name_invalid: "Ism va familiyani to'liq yozing.",
+    telegram_invalid: "Telegram username noto'g'ri. Masalan: @username yoki t.me/username (kamida 5 ta belgi).",
+    pin_invalid: "PIN aynan 4 ta raqamdan iborat bo'lsin.",
+    telegram_taken: "Bu Telegram bilan allaqachon ro'yxatdan o'tilgan. \"Kirish\" bo'limidan kiring.",
+    not_found: "Bunday Telegram bilan ro'yxatdan o'tilmagan.",
+    wrong_pin: "PIN noto'g'ri.",
+    locked: "Ko'p marta xato PIN kiritildi. 15 daqiqadan keyin urinib ko'ring.",
+    no_session: "Sessiya tugagan. Qaytadan kiring.",
+    no_attempts: "Bu test uchun 3 ta urinish tugagan.",
+    perfect: "Siz bu testni 100% topshirgansiz.",
+    no_test: "Test topilmadi.",
+    already_finished: "Bu urinish allaqachon yakunlangan."
+  };
+  const errText = r => ERR[r && r.error] || (r && r.error) || "Noma'lum xato";
+
+  let token = U.store.get("tt_token");
+  let tests = [];
+  let current = null; // ochiq test
+  let run = null;     // ketayotgan urinish
+
+  document.title = CFG.SITE_TITLE; $("siteTitle").textContent = CFG.SITE_TITLE; $("sideTitle").textContent = CFG.SITE_TITLE;
+
+  // ---------- kirish / ro'yxat ----------
+  function showTab(reg) {
+    $("tabReg").classList.toggle("active", reg); $("tabLogin").classList.toggle("active", !reg);
+    $("regForm").classList.toggle("hidden", !reg); $("loginForm").classList.toggle("hidden", reg);
+  }
+  $("tabLogin").onclick = () => showTab(false);
+  $("tabReg").onclick = () => showTab(true);
+
+  function msg(el, text, type = "err") { $(el).innerHTML = text ? `<div class="msg ${type}">${esc(text)}</div>` : ""; }
+
+  $("loginForm").onsubmit = async e => {
+    e.preventDefault(); msg("loginMsg", "");
+    try {
+      const r = await API.rpc("login", { p_telegram: $("lTg").value, p_pin: $("lPin").value });
+      if (!r.ok) {
+        let t = errText(r); if (r.error === "wrong_pin" && r.left) t += ` Yana ${r.left} ta urinish qoldi.`;
+        return msg("loginMsg", t);
+      }
+      token = r.token; U.store.set("tt_token", token); start();
+    } catch (err) { msg("loginMsg", "Ulanishda xato: " + err.message); }
+  };
+
+  $("regForm").onsubmit = async e => {
+    e.preventDefault(); msg("regMsg", "");
+    if ($("rPin").value !== $("rPin2").value) return msg("regMsg", "PIN'lar bir xil emas.");
+    try {
+      const r = await API.rpc("register", {
+        p_first: $("rFirst").value, p_last: $("rLast").value, p_telegram: $("rTg").value, p_pin: $("rPin").value
+      });
+      if (!r.ok) return msg("regMsg", errText(r));
+      token = r.token; U.store.set("tt_token", token); start();
+    } catch (err) { msg("regMsg", "Ulanishda xato: " + err.message); }
+  };
+
+  $("logoutBtn").onclick = () => {
+    if (run && !confirm("Test yakunlanmagan. Chiqsangiz, bu urinish yo'qoladi. Chiqasizmi?")) return;
+    run = null; U.store.del("tt_token"); token = null; location.reload();
+  };
+
+  // ---------- online vaqtni hisoblash ----------
+  let visitId = null;
+  async function ping() {
+    if (!token || document.visibilityState !== "visible") return;
+    try { const r = await API.rpc("ping", { p_token: token, p_visit: visitId }); if (r.ok) visitId = r.visit; } catch (e) {}
+  }
+  setInterval(ping, 30000);
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") ping(); });
+
+  // ---------- boshlash ----------
+  async function start() {
+    if (!token) { $("authView").classList.remove("hidden"); return; }
+    let me;
+    try { me = await API.rpc("me", { p_token: token }); } catch (e) { me = null; }
+    if (!me || !me.ok) {
+      U.store.del("tt_token"); token = null; $("authView").classList.remove("hidden");
+      if (me) msg("loginMsg", errText(me), "warn"); return;
+    }
+    $("authView").classList.add("hidden"); $("appView").classList.remove("hidden");
+    $("meName").textContent = `${me.first_name} ${me.last_name} · @${me.telegram}`;
+    ping();
+    await loadNav();
+    const last = U.store.get("tt_last_test");
+    if (last && tests.some(t => t.id === last)) openTest(last); else welcome();
+  }
+
+  // ---------- chap menyu ----------
+  async function loadNav() {
+    tests = await API.rpc("list_tests");
+    let history = [];
+    try { const h = await API.rpc("my_history", { p_token: token }); if (h.ok) history = h.items; } catch (e) {}
+    const done = {};
+    history.forEach(a => { if (a.finished_at) { done[a.test_id] = done[a.test_id] || []; done[a.test_id].push(a); } });
+
+    const sections = [];
+    tests.forEach(t => {
+      let s = sections.find(x => x.name === t.section);
+      if (!s) { s = { name: t.section, items: [] }; sections.push(s); }
+      s.items.push(t);
+    });
+    const closed = JSON.parse(U.store.get("tt_closed") || "[]");
+    $("nav").innerHTML = sections.map(s => `
+      <div class="sec ${closed.includes(s.name) ? "closed" : ""}" data-sec="${esc(s.name)}">
+        <button class="sec-title" type="button"><span>${esc(s.name)}</span><span class="arrow">▾</span></button>
+        <div class="sec-items">
+          ${[["📝 Testlar", s.items.filter(t => !/r$/.test(t.id))], ["🖼 Rasmli testlar", s.items.filter(t => /r$/.test(t.id))]]
+            .filter(g => g[1].length).map(g => `<div class="sub-title">${g[0]}</div>` + g[1].map(t => {
+            const d = done[t.id] || []; const n = d.length;
+            const best = n ? Math.max(...d.map(a => a.score)) : null;
+            const cls = (n >= MAX || (n && best === t.count)) ? "ok" : n ? "warn" : "";
+            return `<button class="nav-item" type="button" data-id="${esc(t.id)}"><span>${esc(t.title)}</span>
+              <span class="badge ${cls}">${n ? `${best}/${t.count}` : "yangi"}</span></button>`;
+          }).join("")).join("")}
+        </div>
+      </div>`).join("") || `<div class="muted small" style="padding:12px">Hozircha testlar yo'q.</div>`;
+
+    $("nav").querySelectorAll(".sec-title").forEach(b => b.onclick = () => {
+      const box = b.parentElement; box.classList.toggle("closed");
+      const list = [...document.querySelectorAll(".sec.closed")].map(x => x.dataset.sec);
+      U.store.set("tt_closed", JSON.stringify(list));
+    });
+    $("nav").querySelectorAll(".nav-item").forEach(b => b.onclick = () => {
+      if (run && !confirm("Test yakunlanmagan. Boshqa joyga o'tsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
+      run = null; closeMenu(); openTest(b.dataset.id);
+    });
+    markActive();
+  }
+  function markActive() {
+    document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", current && b.dataset.id === current.id));
+  }
+
+  // telefon menyusi
+  function closeMenu() { $("sidebar").classList.remove("open"); $("shade").classList.add("hidden"); }
+  $("menuBtn").onclick = () => { $("sidebar").classList.add("open"); $("shade").classList.remove("hidden"); };
+  $("shade").onclick = closeMenu;
+
+  function setTop(t) { $("topTitle").textContent = t || ""; }
+
+  function welcome() {
+    current = null; markActive(); setTop("");
+    $("content").innerHTML = `<div class="card"><h2>Xush kelibsiz! 👋</h2>
+      <p>Chap menyudan darsni tanlang va testni boshlang.</p>
+      <ul class="muted">
+        <li>Har bir testga <b>${MAX} ta urinish</b> beriladi.</li>
+        <li>To'g'ri javoblar faqat ${MAX}-urinishdan keyin ko'rsatiladi.</li>
+        <li>Savollar va variantlar har safar aralashtiriladi.</li>
+        <li>Test paytida boshqa oynaga o'tish qayd qilinadi.</li>
+      </ul></div>`;
+  }
+
+  // ---------- test sahifasi ----------
+  async function openTest(id) {
+    $("content").innerHTML = `<div class="card muted">Yuklanmoqda...</div>`;
+    const r = await API.rpc("get_test", { p_token: token, p_test_id: id });
+    if (!r.ok) { if (r.error === "no_session") return relogin(); $("content").innerHTML = `<div class="card msg err">${esc(errText(r))}</div>`; return; }
+    current = r; U.store.set("tt_last_test", id); markActive(); setTop(r.title);
+    const left = r.perfect ? 0 : r.max - r.used;
+    const mine = await myAttempts(id);
+    $("content").innerHTML = `
+      <div class="card">
+        <div class="muted small">${esc(r.section)}</div>
+        <h2>${esc(r.title)}</h2>
+        <div class="stats">
+          <div class="stat"><span class="muted small">Savollar</span><b>${r.questions.length}</b></div>
+          <div class="stat"><span class="muted small">Urinishlar</span><b>${r.used} / ${r.max}</b></div>
+          <div class="stat"><span class="muted small">Eng yaxshi natija</span><b>${mine.some(a => a.finished_at) ? Math.max(...mine.filter(a => a.finished_at).map(a => a.score)) + " / " + r.questions.length : "—"}</b></div>
+        </div>
+        ${mine.length ? `<div class="table-wrap"><table><tr><th>Urinish</th><th>Boshlagan</th><th>Vaqt</th><th>Natija</th></tr>
+          ${mine.slice().reverse().map(a => `<tr><td>${a.attempt_no}</td><td>${U.dt(a.started_at)}</td>
+            <td>${a.finished_at ? U.dur(a.seconds) : `<span class="badge bad">tugallanmagan</span>`}</td>
+            <td>${a.finished_at ? `<b>${a.score}</b> / ${a.total}` : "—"}</td></tr>`).join("")}</table></div>` : ""}
+        <div class="row" style="margin-top:16px">
+          ${left > 0 ? `<button class="btn primary" id="startBtn" type="button">${r.used ? "Keyingi urinishni boshlash" : "Testni boshlash"} (${left} ta qoldi)</button>`
+                     : r.perfect ? `<span class="badge ok">🎉 100% — test topshirildi</span>` : `<span class="badge ok">Barcha urinishlar tugagan</span>`}
+          ${r.finished >= r.max || r.perfect ? `<button class="btn" id="reviewBtn" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
+        </div>
+        ${left > 0 ? `<p class="muted small" style="margin-top:12px">Boshlaganingizdan keyin sahifani yopsangiz ham urinish hisoblanadi. Test paytida boshqa oyna yoki ilovaga o'tish qayd qilinadi.</p>` : ""}
+      </div>`;
+    if ($("startBtn")) $("startBtn").onclick = startAttempt;
+    if ($("reviewBtn")) $("reviewBtn").onclick = () => showReview(id);
+  }
+
+  async function myAttempts(id) {
+    try { const h = await API.rpc("my_history", { p_token: token }); return h.ok ? h.items.filter(a => a.test_id === id).sort((a, b) => a.attempt_no - b.attempt_no) : []; }
+    catch (e) { return []; }
+  }
+
+  function relogin() { U.store.del("tt_token"); location.reload(); }
+
+  // ---------- urinish ----------
+  async function startAttempt() {
+    $("startBtn").disabled = true;
+    const r = await API.rpc("start_attempt", { p_token: token, p_test_id: current.id });
+    if (!r.ok) { alert(errText(r)); return openTest(current.id); }
+    run = {
+      id: r.attempt_id, no: r.attempt_no,
+      questions: U.shuffle(current.questions).map(q => ({ ...q, options: q.keep_order ? q.options : U.shuffle(q.options) })),
+      i: 0, answers: {}, ms: {}, shownAt: performance.now(),
+      away: [], awayStart: null
+    };
+    renderQuestion();
+  }
+
+  // boshqa oynaga chiqishni qayd qilish
+  function goAway() { if (run && run.awayStart == null) run.awayStart = Date.now(); }
+  function comeBack() {
+    if (run && run.awayStart != null) {
+      const back = Date.now();
+      run.away.push({ left: new Date(run.awayStart).toISOString(), back: new Date(back).toISOString(),
+                      sec: Math.round((back - run.awayStart) / 1000), q: run.i + 1 });
+      run.awayStart = null;
+      renderAwayNote();
+    }
+  }
+  document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" ? goAway() : comeBack());
+  window.addEventListener("beforeunload", e => { if (run) { e.preventDefault(); e.returnValue = ""; } });
+
+  function renderAwayNote() {
+    const el = $("awayNote"); if (!el || !run) return;
+    el.innerHTML = run.away.length ? `<div class="msg warn small">Test oynasidan ${run.away.length} marta chiqdingiz. Bu ustozga ko'rinadi.</div>` : "";
+  }
+
+  function renderQuestion() {
+    const q = run.questions[run.i], n = run.questions.length, last = run.i === n - 1;
+    $("content").innerHTML = `
+      <div class="card">
+        <div class="row"><span class="muted small">${esc(current.title)} · ${run.no}-urinish</span><span class="space"></span>
+          <span class="badge">${run.i + 1} / ${n}</span></div>
+        <div class="progress"><div style="width:${(run.i) / n * 100}%"></div></div>
+        <p class="q-prompt">${esc(q.prompt)}</p>
+        ${q.image ? `<img class="q-img" src="${esc(q.image)}" alt="Savol rasmi" title="Kattalashtirish uchun bosing" onclick="window.zoomImg(this.src)">` : ""}
+        <div id="opts">${q.options.map(o => `<button type="button" class="opt ${run.answers[q.id] === o.id ? "sel" : ""}" data-id="${esc(o.id)}">${esc(o.text)}</button>`).join("")}</div>
+        <div id="awayNote"></div>
+        <div class="row end" style="margin-top:8px">
+          <button class="btn primary" id="nextBtn" type="button" ${run.answers[q.id] ? "" : "disabled"}>${last ? "Yakunlash ✓" : "Keyingi →"}</button>
+        </div>
+      </div>`;
+    renderAwayNote();
+    run.shownAt = performance.now();
+    $("opts").querySelectorAll(".opt").forEach(b => b.onclick = () => {
+      run.answers[q.id] = b.dataset.id;
+      $("opts").querySelectorAll(".opt").forEach(x => x.classList.toggle("sel", x === b));
+      $("nextBtn").disabled = false;
+    });
+    $("nextBtn").onclick = () => {
+      run.ms[q.id] = (run.ms[q.id] || 0) + Math.round(performance.now() - run.shownAt);
+      if (last) finish(); else { run.i++; renderQuestion(); }
+    };
+  }
+
+  async function finish() {
+    comeBack();
+    $("nextBtn").disabled = true; $("nextBtn").textContent = "Yuborilmoqda...";
+    const answers = run.questions.map(q => ({ q: q.id, a: run.answers[q.id] || null, ms: run.ms[q.id] || 0 }));
+    let r;
+    try { r = await API.rpc("finish_attempt", { p_token: token, p_attempt_id: run.id, p_answers: answers, p_away: run.away }); }
+    catch (e) { $("nextBtn").disabled = false; $("nextBtn").textContent = "Qayta yuborish"; alert("Internet bilan muammo. Qayta bosing."); return; }
+    if (!r.ok) { alert(errText(r)); run = null; return openTest(current.id); }
+    const id = current.id; run = null;
+    const pct = Math.round(r.score / r.total * 100);
+    $("content").innerHTML = `
+      <div class="card" style="text-align:center">
+        <div class="muted">${esc(current.title)} · ${r.attempt_no}-urinish</div>
+        <div class="big-score">${r.score} / ${r.total}</div>
+        <div class="badge ${pct >= 80 ? "ok" : pct >= 50 ? "warn" : "bad"}">${pct}%</div>
+        <p class="muted">${r.perfect ? "🎉 Barakalla! Hamma savolga to'g'ri javob berdingiz. Test topshirildi." : r.review_open ? "Barcha urinishlar tugadi. Endi to'g'ri javoblarni ko'rishingiz mumkin."
+          : `Yana ${MAX - r.attempt_no} ta urinish qoldi. To'g'ri javoblar ${MAX}-urinishdan keyin ochiladi.`}</p>
+        <div class="row" style="justify-content:center">
+          ${r.review_open ? `<button class="btn primary" id="rv" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
+          <button class="btn" id="back" type="button">Test sahifasiga qaytish</button>
+        </div>
+      </div>`;
+    if ($("rv")) $("rv").onclick = () => showReview(id);
+    $("back").onclick = () => openTest(id);
+    loadNav();
+  }
+
+  // ---------- to'g'ri javoblar ----------
+  async function showReview(id) {
+    const r = await API.rpc("get_review", { p_token: token, p_test_id: id });
+    if (!r.ok) return alert(errText(r));
+    const mine = {}; (r.last_answers || []).forEach(a => mine[a.q] = a.a);
+    $("content").innerHTML = `
+      <div class="card"><div class="row"><h2>${esc(r.title)}: to'g'ri javoblar</h2><span class="space"></span>
+        <button class="btn sm" id="back" type="button">← Orqaga</button></div>
+        <p class="muted small">Yashil: to'g'ri javob. Qizil: oxirgi urinishdagi xato javobingiz.</p></div>
+      ${r.questions.map((q, i) => `
+        <div class="card">
+          <p class="q-prompt">${i + 1}. ${esc(q.prompt)}</p>
+          ${q.image ? `<img class="q-img" src="${esc(q.image)}" alt="Savol rasmi" title="Kattalashtirish uchun bosing" onclick="window.zoomImg(this.src)">` : ""}
+          ${q.options.map(o => {
+            const cls = o.id === q.correct_option_id ? "right" : (mine[q.id] === o.id ? "wrong" : "");
+            return `<div class="opt ${cls}" style="cursor:default">${esc(o.text)}</div>`;
+          }).join("")}
+          ${q.explanation ? `<div class="explain">💡 ${esc(q.explanation)}</div>` : ""}
+        </div>`).join("")}`;
+    $("back").onclick = () => openTest(id);
+    window.scrollTo(0, 0);
+  }
+
+  // ---------- natijalarim ----------
+  $("historyBtn").onclick = async () => {
+    if (run && !confirm("Test yakunlanmagan. Chiqsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
+    run = null; closeMenu(); current = null; markActive(); setTop("Natijalarim");
+    const h = await API.rpc("my_history", { p_token: token });
+    if (!h.ok) return relogin();
+    const by = {};
+    h.items.forEach(a => { (by[a.test_id] = by[a.test_id] || { title: a.title, section: a.section, list: [] }).list.push(a); });
+    const ids = Object.keys(by);
+    $("content").innerHTML = `<div class="card"><h2>📊 Mening natijalarim</h2>
+      <p class="muted small">Bu yerda faqat sizning natijalaringiz ko'rinadi.</p></div>` +
+      (ids.length ? ids.map(id => {
+        const g = by[id]; g.list.sort((a, b) => a.attempt_no - b.attempt_no);
+        return `<div class="card"><div class="muted small">${esc(g.section)}</div><h2 style="font-size:17px">${esc(g.title)}</h2>
+          <div class="table-wrap"><table><tr><th>Urinish</th><th>Kirgan vaqti</th><th>Tugatgan vaqti</th><th>Sarflangan vaqt</th><th>Natija</th></tr>
+          ${g.list.map(a => `<tr><td>${a.attempt_no}-urinish</td><td>${U.dt(a.started_at)}</td><td>${a.finished_at ? U.time(a.finished_at) : "—"}</td>
+            <td>${a.finished_at ? U.dur(a.seconds) : `<span class="badge bad">tugallanmagan</span>`}</td>
+            <td>${a.finished_at ? `<b>${a.score}</b> / ${a.total}` : "—"}</td></tr>`).join("")}
+          </table></div></div>`;
+      }).join("") : `<div class="card muted">Hali birorta test ishlamagansiz.</div>`);
+  };
+
+  start();
+})();
+</script>
+</body>
+</html>
