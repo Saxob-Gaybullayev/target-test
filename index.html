@@ -66,6 +66,9 @@
   </div>
 </div>
 
+<div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
+<script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
+document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
 <script src="config.js"></script>
 <script src="api.js"></script>
 <script>
@@ -289,8 +292,6 @@
     }
   }
   document.addEventListener("visibilitychange", () => document.visibilityState === "hidden" ? goAway() : comeBack());
-  window.addEventListener("blur", goAway);
-  window.addEventListener("focus", comeBack);
   window.addEventListener("beforeunload", e => { if (run) { e.preventDefault(); e.returnValue = ""; } });
 
   function renderAwayNote() {
@@ -306,7 +307,7 @@
           <span class="badge">${run.i + 1} / ${n}</span></div>
         <div class="progress"><div style="width:${(run.i) / n * 100}%"></div></div>
         <p class="q-prompt">${esc(q.prompt)}</p>
-        ${q.image ? `<a href="${esc(q.image)}" target="_blank" title="Kattalashtirish"><img class="q-img" src="${esc(q.image)}" alt="Savol rasmi"></a>` : ""}
+        ${q.image ? `<img class="q-img" src="${esc(q.image)}" alt="Savol rasmi" title="Kattalashtirish uchun bosing" onclick="window.zoomImg(this.src)">` : ""}
         <div id="opts">${q.options.map(o => `<button type="button" class="opt ${run.answers[q.id] === o.id ? "sel" : ""}" data-id="${esc(o.id)}">${esc(o.text)}</button>`).join("")}</div>
         <div id="awayNote"></div>
         <div class="row end" style="margin-top:8px">
@@ -365,7 +366,7 @@
       ${r.questions.map((q, i) => `
         <div class="card">
           <p class="q-prompt">${i + 1}. ${esc(q.prompt)}</p>
-          ${q.image ? `<a href="${esc(q.image)}" target="_blank" title="Kattalashtirish"><img class="q-img" src="${esc(q.image)}" alt="Savol rasmi"></a>` : ""}
+          ${q.image ? `<img class="q-img" src="${esc(q.image)}" alt="Savol rasmi" title="Kattalashtirish uchun bosing" onclick="window.zoomImg(this.src)">` : ""}
           ${q.options.map(o => {
             const cls = o.id === q.correct_option_id ? "right" : (mine[q.id] === o.id ? "wrong" : "");
             return `<div class="opt ${cls}" style="cursor:default">${esc(o.text)}</div>`;
