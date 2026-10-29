@@ -75,6 +75,7 @@ input:focus, textarea:focus { outline: 2px solid var(--brand-soft); border-color
 .sec-title .arrow { transition: transform .15s; color: var(--muted); }
 .sec.closed .arrow { transform: rotate(-90deg); }
 .sec.closed .sec-items { display: none; }
+.sub-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; padding: 10px 10px 4px 18px; }
 .nav-item {
   display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
   border: 0; background: transparent; text-align: left; padding: 8px 10px 8px 18px; border-radius: 8px; cursor: pointer; color: var(--text);

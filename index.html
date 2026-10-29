@@ -179,13 +179,14 @@
       <div class="sec ${closed.includes(s.name) ? "closed" : ""}" data-sec="${esc(s.name)}">
         <button class="sec-title" type="button"><span>${esc(s.name)}</span><span class="arrow">▾</span></button>
         <div class="sec-items">
-          ${s.items.map(t => {
+          ${[["📝 Testlar", s.items.filter(t => !/r$/.test(t.id))], ["🖼 Rasmli testlar", s.items.filter(t => /r$/.test(t.id))]]
+            .filter(g => g[1].length).map(g => `<div class="sub-title">${g[0]}</div>` + g[1].map(t => {
             const d = done[t.id] || []; const n = d.length;
             const best = n ? Math.max(...d.map(a => a.score)) : null;
             const cls = n >= MAX ? "ok" : n ? "warn" : "";
             return `<button class="nav-item" type="button" data-id="${esc(t.id)}"><span>${esc(t.title)}</span>
               <span class="badge ${cls}">${n ? `${best}/${t.count}` : "yangi"}</span></button>`;
-          }).join("")}
+          }).join("")).join("")}
         </div>
       </div>`).join("") || `<div class="muted small" style="padding:12px">Hozircha testlar yo'q.</div>`;
 
