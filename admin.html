@@ -175,7 +175,8 @@
     $("content").innerHTML = `
       <div class="card">
         <div class="row"><button class="btn sm" id="back" type="button">← Ro'yxatga</button><span class="space"></span>
-          <button class="btn sm" id="pinBtn" type="button">🔑 PIN'ni tiklash</button></div>
+          <button class="btn sm" id="pinBtn" type="button">🔑 PIN'ni tiklash</button>
+          <button class="btn sm danger" id="clearBtn" type="button">🗑 Tarixni tozalash</button></div>
         <h2 style="margin-top:12px">${esc(s.first_name)} ${esc(s.last_name)}</h2>
         <a href="https://t.me/${esc(s.telegram)}" target="_blank">@${esc(s.telegram)}</a>
         <span class="muted small"> · ro'yxatdan o'tgan: ${U.dt(s.created_at)}</span>
@@ -197,6 +198,11 @@
         ${r.visits.length ? "" : `<p class="muted">Ma'lumot yo'q.</p>`}
       </div>`;
     $("back").onclick = viewStudents;
+    $("clearBtn").onclick = async () => {
+      if (!confirm(`${s.first_name} ${s.last_name}: barcha urinishlar va kirishlar tarixi o'chiriladi. Akkaunt qoladi. Davom etasizmi?`)) return;
+      const x = await call("admin_clear_student", { p_student: id });
+      if (x.ok) viewStudent(id); else alert("Xato: " + x.error);
+    };
     $("pinBtn").onclick = () => {
       $("pinBox").innerHTML = `<div class="row" style="margin-top:12px"><input type="text" id="newPin" maxlength="4" inputmode="numeric" placeholder="Yangi PIN (4 raqam)" style="max-width:200px">
         <button class="btn sm primary" id="savePin" type="button">Saqlash</button></div>`;
