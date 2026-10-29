@@ -269,7 +269,7 @@
     if (!r.ok) { alert(errText(r)); return openTest(current.id); }
     run = {
       id: r.attempt_id, no: r.attempt_no,
-      questions: U.shuffle(current.questions).map(q => ({ ...q, options: U.shuffle(q.options) })),
+      questions: U.shuffle(current.questions).map(q => ({ ...q, options: q.keep_order ? q.options : U.shuffle(q.options) })),
       i: 0, answers: {}, ms: {}, shownAt: performance.now(),
       away: [], awayStart: null
     };
@@ -305,6 +305,7 @@
           <span class="badge">${run.i + 1} / ${n}</span></div>
         <div class="progress"><div style="width:${(run.i) / n * 100}%"></div></div>
         <p class="q-prompt">${esc(q.prompt)}</p>
+        ${q.image ? `<a href="${esc(q.image)}" target="_blank" title="Kattalashtirish"><img class="q-img" src="${esc(q.image)}" alt="Savol rasmi"></a>` : ""}
         <div id="opts">${q.options.map(o => `<button type="button" class="opt ${run.answers[q.id] === o.id ? "sel" : ""}" data-id="${esc(o.id)}">${esc(o.text)}</button>`).join("")}</div>
         <div id="awayNote"></div>
         <div class="row end" style="margin-top:8px">
@@ -363,6 +364,7 @@
       ${r.questions.map((q, i) => `
         <div class="card">
           <p class="q-prompt">${i + 1}. ${esc(q.prompt)}</p>
+          ${q.image ? `<a href="${esc(q.image)}" target="_blank" title="Kattalashtirish"><img class="q-img" src="${esc(q.image)}" alt="Savol rasmi"></a>` : ""}
           ${q.options.map(o => {
             const cls = o.id === q.correct_option_id ? "right" : (mine[q.id] === o.id ? "wrong" : "");
             return `<div class="opt ${cls}" style="cursor:default">${esc(o.text)}</div>`;

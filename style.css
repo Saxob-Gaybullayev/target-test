@@ -112,6 +112,9 @@ input:focus, textarea:focus { outline: 2px solid var(--brand-soft); border-color
 .stat b { display: block; font-size: 20px; }
 .explain { background: var(--bg); border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-top: 6px; }
 
+.q-img { display: block; width: 100%; border: 1px solid var(--line); border-radius: 10px; margin: 0 0 14px; cursor: zoom-in; }
+.q-hint { font-size: 13px; color: var(--muted); margin: -8px 0 14px; }
+
 /* ---------- jadval ---------- */
 .table-wrap { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-size: 14px; }
