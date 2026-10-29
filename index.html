@@ -86,6 +86,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     locked: "Ko'p marta xato PIN kiritildi. 15 daqiqadan keyin urinib ko'ring.",
     no_session: "Sessiya tugagan. Qaytadan kiring.",
     no_attempts: "Bu test uchun 3 ta urinish tugagan.",
+    perfect: "Siz bu testni 100% topshirgansiz.",
     no_test: "Test topilmadi.",
     already_finished: "Bu urinish allaqachon yakunlangan."
   };
@@ -186,7 +187,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
             .filter(g => g[1].length).map(g => `<div class="sub-title">${g[0]}</div>` + g[1].map(t => {
             const d = done[t.id] || []; const n = d.length;
             const best = n ? Math.max(...d.map(a => a.score)) : null;
-            const cls = n >= MAX ? "ok" : n ? "warn" : "";
+            const cls = (n >= MAX || (n && best === t.count)) ? "ok" : n ? "warn" : "";
             return `<button class="nav-item" type="button" data-id="${esc(t.id)}"><span>${esc(t.title)}</span>
               <span class="badge ${cls}">${n ? `${best}/${t.count}` : "yangi"}</span></button>`;
           }).join("")).join("")}
@@ -233,7 +234,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     const r = await API.rpc("get_test", { p_token: token, p_test_id: id });
     if (!r.ok) { if (r.error === "no_session") return relogin(); $("content").innerHTML = `<div class="card msg err">${esc(errText(r))}</div>`; return; }
     current = r; U.store.set("tt_last_test", id); markActive(); setTop(r.title);
-    const left = r.max - r.used;
+    const left = r.perfect ? 0 : r.max - r.used;
     const mine = await myAttempts(id);
     $("content").innerHTML = `
       <div class="card">
@@ -250,8 +251,8 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
             <td>${a.finished_at ? `<b>${a.score}</b> / ${a.total}` : "—"}</td></tr>`).join("")}</table></div>` : ""}
         <div class="row" style="margin-top:16px">
           ${left > 0 ? `<button class="btn primary" id="startBtn" type="button">${r.used ? "Keyingi urinishni boshlash" : "Testni boshlash"} (${left} ta qoldi)</button>`
-                     : `<span class="badge ok">Barcha urinishlar tugagan</span>`}
-          ${r.finished >= r.max ? `<button class="btn" id="reviewBtn" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
+                     : r.perfect ? `<span class="badge ok">🎉 100% — test topshirildi</span>` : `<span class="badge ok">Barcha urinishlar tugagan</span>`}
+          ${r.finished >= r.max || r.perfect ? `<button class="btn" id="reviewBtn" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
         </div>
         ${left > 0 ? `<p class="muted small" style="margin-top:12px">Boshlaganingizdan keyin sahifani yopsangiz ham urinish hisoblanadi. Test paytida boshqa oyna yoki ilovaga o'tish qayd qilinadi.</p>` : ""}
       </div>`;
@@ -342,7 +343,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
         <div class="muted">${esc(current.title)} · ${r.attempt_no}-urinish</div>
         <div class="big-score">${r.score} / ${r.total}</div>
         <div class="badge ${pct >= 80 ? "ok" : pct >= 50 ? "warn" : "bad"}">${pct}%</div>
-        <p class="muted">${r.review_open ? "Barcha urinishlar tugadi. Endi to'g'ri javoblarni ko'rishingiz mumkin."
+        <p class="muted">${r.perfect ? "🎉 Barakalla! Hamma savolga to'g'ri javob berdingiz. Test topshirildi." : r.review_open ? "Barcha urinishlar tugadi. Endi to'g'ri javoblarni ko'rishingiz mumkin."
           : `Yana ${MAX - r.attempt_no} ta urinish qoldi. To'g'ri javoblar ${MAX}-urinishdan keyin ochiladi.`}</p>
         <div class="row" style="justify-content:center">
           ${r.review_open ? `<button class="btn primary" id="rv" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
