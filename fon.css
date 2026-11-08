@@ -221,3 +221,73 @@ html[data-theme="mint"] {
   --hero: url(fon/mint.webp); --hero-ar: 400 / 172;
   --waves: block; --w0: #8fdcb8; --w1: #bdeccf; --w2: #8fdcb8; --area-op: .35; --line-op: .3;
 }
+
+/* ---------- qo'shimcha: to'lqin qalinligi, pastki manzara ---------- */
+.w-lines path:nth-child(1) { stroke-width: var(--sw1, 5); }
+.w-lines path:nth-child(2) { stroke-width: var(--sw2, 2.2); }
+.w-lines path:nth-child(3) { stroke-width: var(--sw3, 1.4); }
+.w-lines path:nth-child(4) { stroke-width: var(--sw4, 3); }
+html[data-theme] .deco-waves { height: var(--wave-h, 40vh); }
+.deco-land { position: absolute; left: 290px; right: 0; bottom: 0; height: 46vh; display: var(--land, none);
+  background: var(--land-img, none) center bottom / cover no-repeat;
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 40%); mask-image: linear-gradient(180deg, transparent, #000 40%); }
+@media (max-width: 820px) { .deco-land { left: 0; height: 32vh; } }
+
+/* =============== 3+. Yashil-oltin kubok — KUCHLI NEON =============== */
+html[data-theme="trophy"] {
+  --card-line: #2bf0b0;
+  --card-glow: 0 0 0 1px rgba(43, 240, 176, .35), 0 0 18px rgba(43, 240, 176, .45), 0 0 46px rgba(43, 240, 176, .18), inset 0 0 22px rgba(43, 240, 176, .1);
+  --active-glow: 0 0 0 1px rgba(255, 210, 90, .6), 0 0 18px rgba(255, 200, 60, .7), 0 0 40px rgba(255, 190, 40, .3);
+  --btn-glow: 0 0 16px rgba(255, 200, 60, .75), 0 0 36px rgba(255, 190, 40, .35);
+  --sw1: 10; --sw2: 4; --sw3: 2.5; --sw4: 7; --area-op: 1; --wave-h: 48vh; --spark: 1;
+}
+html[data-theme="trophy"] .card, html[data-theme="trophy"] .auth-card, html[data-theme="trophy"] .sec-title { border-width: 2px; }
+html[data-theme="trophy"] .sidebar { border-right: 2px solid rgba(43, 240, 176, .45); box-shadow: 6px 0 30px rgba(43, 240, 176, .12); }
+html[data-theme="trophy"] .nav-item.active { background: linear-gradient(135deg, rgba(255, 205, 80, .32), rgba(200, 140, 20, .22)); color: #fff3cf; border: 2px solid #ffd257; }
+html[data-theme="trophy"] .nav-item.active .ring b { background: #2a1f05; color: #ffd257; }
+html[data-theme="trophy"] .nav-item.active .badge, html[data-theme="trophy"] .nav-item.active .badge:not(.ok):not(.warn) { background: rgba(255, 210, 87, .25); color: #ffe28a; }
+html[data-theme="trophy"] .btn:not(.primary) { border: 1.5px solid #e9b93a; box-shadow: 0 0 12px rgba(233, 185, 58, .35); }
+html[data-theme="trophy"] .card.hero::before { content: ""; position: absolute; z-index: 0; right: -2%; top: -35%; height: 175%; aspect-ratio: 1; border-radius: 50%;
+  border: 3px solid rgba(43, 240, 176, .8); box-shadow: 0 0 22px rgba(43, 240, 176, .8), inset 0 0 30px rgba(43, 240, 176, .35); }
+html[data-theme="trophy"] .card.note { border: 2px solid #ffcf4a; box-shadow: 0 0 0 1px rgba(255, 207, 74, .3), 0 0 22px rgba(255, 200, 60, .55), inset 0 0 26px rgba(255, 200, 60, .12);
+  background: linear-gradient(90deg, rgba(255, 190, 40, .2), rgba(43, 240, 176, .08)); }
+html[data-theme="trophy"] .stats.sum .stat { border-width: 2px; border-color: var(--cc);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 45%, #000), color-mix(in srgb, var(--cc) 14%, #000));
+  box-shadow: 0 0 18px color-mix(in srgb, var(--cc) 65%, transparent), 0 0 44px color-mix(in srgb, var(--cc) 25%, transparent), inset 0 0 24px color-mix(in srgb, var(--cc) 25%, transparent); }
+html[data-theme="trophy"] .stats.sum .stat::after { background: radial-gradient(ellipse at 50% 30%, color-mix(in srgb, var(--cc) 90%, transparent), transparent 62%); }
+html[data-theme="trophy"] .card.hero h2 .accent { color: #ffd257; text-shadow: 0 0 18px rgba(255, 200, 60, .55); }
+
+/* =============== 9. Ko'k menyu + och mint =============== */
+html[data-theme="navymint"] {
+  --bg: #eef6f8;
+  --bg-img: radial-gradient(700px 500px at 100% 0%, rgba(90, 210, 160, .35), transparent 60%), radial-gradient(700px 500px at 100% 100%, rgba(90, 210, 160, .35), transparent 60%), linear-gradient(180deg, #f2f6fc, #eef8f4);
+  --panel: rgba(255, 255, 255, .85); --panel-2: #f3f8f6; --solid: #fff; --topbar: rgba(11, 26, 51, .95);
+  --text: #12233a; --muted: #5f7186; --line: #e2ece8; --line-2: #c9dcd4;
+  --brand: #0f9a62; --brand-2: #16b673; --brand-soft: #e2f6ec; --brand-ring: rgba(22, 182, 115, .22);
+  --brand-grad: linear-gradient(135deg, #18b877, #0c8653); --on-brand: #fff; --accent: #0f9a62;
+  --card-line: #e6f0ec; --card-glow: 0 12px 34px rgba(20, 60, 90, .1);
+  --c1: #16a36a; --c2: #2f80ed; --c3: #e8457f;
+  --hero: url(fon/target.webp); --hero-size: contain;
+  --waves: block; --w0: #7fdcb6; --w1: #b6efd6; --w2: #7fdcb6; --area-op: .45; --line-op: .25;
+}
+html[data-theme="navymint"] .sidebar {
+  --text: #e9f1ff; --muted: #9fb2cc; --panel-2: rgba(255, 255, 255, .06); --line: rgba(255, 255, 255, .1); --card-line: rgba(255, 255, 255, .12);
+  --input: rgba(255, 255, 255, .06); --solid: #0e1f3c; --head-bg: transparent; --card-glow: none; --panel: rgba(255, 255, 255, .06);
+  background: linear-gradient(180deg, #0c1c38, #0a2440); color: var(--text); border-right: 0;
+}
+html[data-theme="navymint"] .sidebar .sec-title { background: var(--brand-grad); color: #fff; border: 0; }
+html[data-theme="navymint"] .topbar, html[data-theme="navymint"] .topbar b { color: #e9f1ff; }
+
+/* =============== 10. Och ko'k tog' + o'rmon =============== */
+html[data-theme="sky"] {
+  --bg: #eef3fc;
+  --bg-img: linear-gradient(180deg, #e3ecfb 0%, #eef2fb 45%, #f6efe9 100%);
+  --panel: rgba(255, 255, 255, .82); --panel-2: #f3f6fd; --solid: #fff; --side: rgba(255, 255, 255, .86); --topbar: rgba(255, 255, 255, .92);
+  --text: #121c38; --muted: #5d6987; --line: #e1e8f6; --line-2: #c8d5ef;
+  --brand: #2563eb; --brand-2: #3b82f6; --brand-soft: #e6eefe; --brand-ring: rgba(59, 130, 246, .22);
+  --brand-grad: linear-gradient(135deg, #3b82f6, #1d4ed8); --on-brand: #fff; --accent: #2563eb;
+  --card-line: rgba(255, 255, 255, .9); --card-glow: 0 12px 34px rgba(30, 60, 140, .12);
+  --c1: #3b82f6; --c2: #16a36a; --c3: #f97316;
+  --hero: url(fon/sky.webp);
+  --land: block; --land-img: url(fon/land.webp);
+}

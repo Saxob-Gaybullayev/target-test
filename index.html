@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=8">
-  <link rel="stylesheet" href="fon.css?v=8">
+  <link rel="stylesheet" href="style.css?v=9">
+  <link rel="stylesheet" href="fon.css?v=9">
   <script>try { var _t = localStorage.getItem("tt_theme"); if (_t) document.documentElement.dataset.theme = _t; } catch (e) {}</script>
 </head>
 <body>
 <!-- fon bezaklari (mavzuga qarab) -->
 <div class="deco" aria-hidden="true">
+  <div class="deco-land"></div>
   <svg class="deco-waves" viewBox="0 0 1200 400" preserveAspectRatio="none">
     <defs>
       <linearGradient id="wg1" x1="0" x2="1"><stop offset="0" class="w-s0"/><stop offset=".55" class="w-s1"/><stop offset="1" class="w-s2"/></linearGradient>
@@ -108,8 +109,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=8"></script>
-<script src="api.js?v=8"></script>
+<script src="config.js?v=9"></script>
+<script src="api.js?v=9"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -531,7 +532,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     ["mtg", "Yashil tog'", "#061a17", "#1fd1a0", "#f2a93b"],
     ["mtb", "Ko'k tog'", "#071528", "#18d4f0", "#5a6bff"],
     ["lilac", "Och binafsha", "#f6f2ff", "#7a4be6", "#f59e2b"],
-    ["mint", "Och yashil", "#f2faf6", "#0f7a4f", "#5fd3a0"]
+    ["mint", "Och yashil", "#f2faf6", "#0f7a4f", "#5fd3a0"],
+    ["navymint", "Ko'k menyu + mint", "#0b1a33", "#eef7f3", "#16a36a"],
+    ["sky", "Och ko'k tog'", "#eaf2ff", "#2563eb", "#f97316"]
   ];
   function setTheme(k) {
     if (k) document.documentElement.dataset.theme = k; else delete document.documentElement.dataset.theme;
