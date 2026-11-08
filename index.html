@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=5">
+  <link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 
@@ -21,8 +21,13 @@
     <form id="loginForm" autocomplete="on">
       <label class="field"><span>Telegram username yoki link</span>
         <input type="text" id="lTg" placeholder="@username yoki t.me/username" required></label>
-      <label class="field"><span>PIN (4 ta raqam)</span>
-        <input type="password" id="lPin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required></label>
+      <div class="field"><span>PIN (4 ta raqam)</span>
+        <div class="otp" id="otp">
+          <div class="otp-spin"><div class="otp-slot"></div><div class="otp-slot"></div><div class="otp-slot"></div><div class="otp-slot"></div></div>
+          <div class="otp-done"><div class="otp-box"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"/></svg></div><div class="otp-ok">Xush kelibsiz!</div></div>
+          <input type="password" id="lPin" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" required autocomplete="current-password" aria-label="PIN (4 ta raqam)">
+        </div>
+      </div>
       <div id="loginMsg"></div>
       <button class="btn primary" style="width:100%" type="submit">Kirish</button>
     </form>
@@ -69,8 +74,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=5"></script>
-<script src="api.js?v=5"></script>
+<script src="config.js?v=6"></script>
+<script src="api.js?v=6"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -109,16 +114,56 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
 
   function msg(el, text, type = "err") { $(el).innerHTML = text ? `<div class="msg ${type}">${esc(text)}</div>` : ""; }
 
+  // PIN kataklari (4 ta) va kirish animatsiyasi
+  const otp = $("otp"), pinEl = $("lPin"), slots = [...otp.querySelectorAll(".otp-slot")];
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  let loginBusy = false;
+  function paintOtp() {
+    const v = pinEl.value.replace(/\D/g, "").slice(0, 4);
+    if (v !== pinEl.value) pinEl.value = v;
+    const focused = document.activeElement === pinEl;
+    slots.forEach((s, i) => {
+      s.textContent = v[i] ? "•" : "";
+      s.classList.toggle("filled", !!v[i]);
+      s.classList.toggle("cur", focused && i === Math.min(v.length, 3));
+    });
+  }
+  pinEl.addEventListener("input", () => {
+    paintOtp();
+    if (pinEl.value.length === 4 && $("lTg").value.trim() && !loginBusy) $("loginForm").requestSubmit();
+  });
+  pinEl.addEventListener("focus", paintOtp); pinEl.addEventListener("blur", paintOtp);
+  paintOtp();
+
   $("loginForm").onsubmit = async e => {
-    e.preventDefault(); msg("loginMsg", "");
-    try {
-      const r = await API.rpc("login", { p_telegram: $("lTg").value, p_pin: $("lPin").value });
-      if (!r.ok) {
-        let t = errText(r); if (r.error === "wrong_pin" && r.left) t += ` Yana ${r.left} ta urinish qoldi.`;
-        return msg("loginMsg", t);
+    e.preventDefault(); if (loginBusy) return;
+    msg("loginMsg", ""); loginBusy = true;
+    const btn = $("loginForm").querySelector("button[type=submit]"); btn.disabled = true;
+    otp.className = "otp orbit"; pinEl.blur();
+    const t0 = Date.now(); let r = null, netErr = null;
+    try { r = await API.rpc("login", { p_telegram: $("lTg").value, p_pin: pinEl.value }); }
+    catch (err) { netErr = err; }
+    const wait = 1100 - (Date.now() - t0); if (wait > 0) await sleep(wait);
+    if (r && r.ok) {
+      otp.classList.add("ok"); await sleep(500);
+      otp.classList.add("collapse"); await sleep(380);
+      const done = otp.querySelector(".otp-done");
+      for (let i = 0; i < 14; i++) {
+        const s = document.createElement("span"); s.className = "otp-spark";
+        s.style.setProperty("--a", (i * 360 / 14 + Math.random() * 12) + "deg");
+        s.style.setProperty("--d", (120 + Math.random() * 160) + "ms");
+        done.appendChild(s);
       }
+      otp.classList.add("done"); await sleep(1250);
       token = r.token; U.store.set("tt_token", token); start();
-    } catch (err) { msg("loginMsg", "Ulanishda xato: " + err.message); }
+      return;
+    }
+    otp.className = "otp err"; await sleep(650);
+    otp.className = "otp"; pinEl.value = ""; paintOtp();
+    btn.disabled = false; loginBusy = false;
+    if (netErr) return msg("loginMsg", "Ulanishda xato: " + netErr.message);
+    let t = errText(r); if (r && r.error === "wrong_pin" && r.left) t += ` Yana ${r.left} ta urinish qoldi.`;
+    msg("loginMsg", t); pinEl.focus();
   };
 
   $("regForm").onsubmit = async e => {

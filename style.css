@@ -190,3 +190,59 @@ tr.click:hover td { background: #f1f8f3; }
 .q-dot { width:34px; height:34px; border-radius:999px; border:1px solid var(--line, #d6e4dc); background:#fff; color:inherit; font:inherit; font-size:14px; cursor:pointer; }
 .q-dot.done { background:#e3f4ea; border-color:var(--brand-2, #1f9d55); color:var(--brand, #0f5a3c); }
 .q-dot.cur { outline:2px solid var(--brand-2, #1f9d55); outline-offset:1px; font-weight:700; }
+
+/* ===== PIN kataklari va kirish animatsiyasi ===== */
+.otp { position: relative; height: 64px; margin-top: 6px; transition: height .45s cubic-bezier(.3,.9,.4,1); }
+.otp.orbit, .otp.ok, .otp.collapse, .otp.done { height: 160px; }
+.otp input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; font-size: 16px; caret-color: transparent; cursor: text; border: 0; }
+.otp.orbit input, .otp.done input { pointer-events: none; }
+.otp-spin { position: absolute; inset: 0; }
+.otp.orbit .otp-spin { animation: otpSpin 1.25s cubic-bezier(.55,0,.45,1) infinite; }
+.otp-slot {
+  --x: 0px; --y: 0px; position: absolute; left: 50%; top: 50%; width: 50px; height: 56px; margin: -28px 0 0 -25px;
+  display: grid; place-items: center; font-size: 28px; font-weight: 700; color: var(--brand);
+  background: #fff; border: 1.5px solid var(--line); border-radius: 14px; box-shadow: 0 2px 6px rgba(15, 90, 60, .06);
+  transform: translate(var(--x), var(--y));
+  transition: transform .55s cubic-bezier(.34,1.45,.5,1), background .3s, border-color .3s, color .3s, opacity .3s, box-shadow .3s;
+}
+.otp-slot:nth-child(1) { --x: -90px; } .otp-slot:nth-child(2) { --x: -30px; }
+.otp-slot:nth-child(3) { --x: 30px; }  .otp-slot:nth-child(4) { --x: 90px; }
+.otp-slot.filled { border-color: var(--brand-2); background: #f3fbf6; }
+.otp-slot.cur { border-color: var(--brand-2); box-shadow: 0 0 0 4px var(--brand-ring, rgba(31,157,85,.18)); }
+.otp-slot.cur:not(.filled)::after { content: ""; width: 2px; height: 24px; background: var(--brand-2); animation: otpCaret 1s steps(1) infinite; }
+/* aylana bo'ylab tizilish */
+.otp.orbit .otp-slot:nth-child(1), .otp.ok .otp-slot:nth-child(1) { --x: -52px; --y: 0px; }
+.otp.orbit .otp-slot:nth-child(2), .otp.ok .otp-slot:nth-child(2) { --x: 0px; --y: -52px; }
+.otp.orbit .otp-slot:nth-child(3), .otp.ok .otp-slot:nth-child(3) { --x: 52px; --y: 0px; }
+.otp.orbit .otp-slot:nth-child(4), .otp.ok .otp-slot:nth-child(4) { --x: 0px; --y: 52px; }
+.otp.ok .otp-slot { background: #e3f6ea; border-color: #2fb36b; color: #14804a; box-shadow: 0 0 0 4px rgba(47,179,107,.15); }
+.otp.collapse .otp-slot { transform: translate(0, 0) scale(.25) rotate(45deg); opacity: 0; transition-duration: .38s; }
+/* tasdiq belgisi */
+.otp-done { position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 10px; opacity: 0; pointer-events: none; }
+.otp.done .otp-done { opacity: 1; }
+.otp-box { width: 62px; height: 62px; border-radius: 18px; display: grid; place-items: center; position: relative;
+  background: linear-gradient(145deg, #2fb36b, var(--brand)); box-shadow: 0 10px 26px rgba(15, 90, 60, .3); transform: scale(.4); }
+.otp.done .otp-box { animation: otpPop .55s cubic-bezier(.34,1.6,.5,1) forwards; }
+.otp-box::before, .otp-box::after { content: ""; position: absolute; inset: -6px; border-radius: 22px; border: 2px solid rgba(47,179,107,.5); opacity: 0; }
+.otp.done .otp-box::before { animation: otpWave 1s ease-out .15s; }
+.otp.done .otp-box::after { animation: otpWave 1s ease-out .4s; }
+.otp-box svg { width: 32px; height: 32px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 24; stroke-dashoffset: 24; }
+.otp.done .otp-box svg { animation: otpDraw .4s ease-out .25s forwards; }
+.otp-ok { font-weight: 700; color: #14804a; opacity: 0; transform: translateY(6px); }
+.otp.done .otp-ok { animation: otpUp .4s ease-out .35s forwards; }
+.otp-spark { position: absolute; left: 50%; top: calc(50% - 16px); width: 6px; height: 6px; margin: -3px; border-radius: 50%; background: #2fb36b;
+  transform: rotate(var(--a)) translateY(0); opacity: 0; animation: otpSpark .8s ease-out var(--d) forwards; }
+/* xato */
+.otp.err .otp-slot { border-color: var(--bad); color: var(--bad); background: var(--bad-soft); animation: otpShake .45s; }
+@keyframes otpSpin { to { transform: rotate(360deg); } }
+@keyframes otpCaret { 50% { opacity: 0; } }
+@keyframes otpPop { to { transform: scale(1); } }
+@keyframes otpWave { 0% { opacity: .9; transform: scale(.9); } 100% { opacity: 0; transform: scale(1.7); } }
+@keyframes otpDraw { to { stroke-dashoffset: 0; } }
+@keyframes otpUp { to { opacity: 1; transform: none; } }
+@keyframes otpSpark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(-30px) scale(1); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(-78px) scale(.4); } }
+@keyframes otpShake { 20%, 60% { translate: -6px 0; } 40%, 80% { translate: 6px 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .otp.orbit .otp-spin { animation: none; }
+  .otp-slot { transition-duration: .01s; }
+}
