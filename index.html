@@ -4,22 +4,24 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=7">
-  <link rel="stylesheet" href="fon.css?v=7">
+  <link rel="stylesheet" href="style.css?v=8">
+  <link rel="stylesheet" href="fon.css?v=8">
   <script>try { var _t = localStorage.getItem("tt_theme"); if (_t) document.documentElement.dataset.theme = _t; } catch (e) {}</script>
 </head>
 <body>
 <!-- fon bezaklari (mavzuga qarab) -->
 <div class="deco" aria-hidden="true">
-  <div class="deco-hero"></div>
   <svg class="deco-waves" viewBox="0 0 1200 400" preserveAspectRatio="none">
     <defs>
       <linearGradient id="wg1" x1="0" x2="1"><stop offset="0" class="w-s0"/><stop offset=".55" class="w-s1"/><stop offset="1" class="w-s2"/></linearGradient>
       <linearGradient id="wg2" x1="0" x2="1"><stop offset="0" class="w-s2"/><stop offset=".5" class="w-s0"/><stop offset="1" class="w-s1"/></linearGradient>
       <linearGradient id="wfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="w-f0"/><stop offset="1" class="w-f1"/></linearGradient>
+      <linearGradient id="wfade" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".7" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+      <mask id="wmask"><rect width="1200" height="400" fill="url(#wfade)"/></mask>
       <filter id="wglow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
     </defs>
-    <path class="w-area" d="M0 300 C 220 180, 420 330, 640 250 S 1000 120, 1200 170 L1200 400 L0 400 Z" fill="url(#wfill)"/>
+    <path class="w-area" d="M0 300 C 220 180, 420 330, 640 250 S 1000 120, 1200 170 L1200 400 L0 400 Z" fill="url(#wg1)" mask="url(#wmask)"/>
+    <path class="w-area2" d="M0 340 C 240 250, 460 360, 680 300 S 1020 190, 1200 230 L1200 400 L0 400 Z" fill="url(#wg2)" mask="url(#wmask)"/>
     <g class="w-lines" filter="url(#wglow)" fill="none">
       <path d="M-20 290 C 220 170, 420 320, 640 245 S 1000 115, 1220 165" stroke="url(#wg1)" stroke-width="5"/>
       <path d="M-20 310 C 230 200, 430 340, 650 268 S 1010 140, 1220 190" stroke="url(#wg1)" stroke-width="2.2" opacity=".8"/>
@@ -80,7 +82,7 @@
     <aside class="sidebar" id="sidebar">
       <div class="head">
         <b id="sideTitle">Target kursi</b>
-        <span class="muted small" id="meName"></span>
+        <div class="me"><span class="ava" id="ava">👤</span><span class="muted small" id="meName"></span></div>
       </div>
       <nav id="nav"></nav>
       <div class="foot">
@@ -106,8 +108,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=7"></script>
-<script src="api.js?v=7"></script>
+<script src="config.js?v=8"></script>
+<script src="api.js?v=8"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -235,6 +237,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     }
     $("authView").classList.add("hidden"); $("appView").classList.remove("hidden");
     $("meName").textContent = `${me.first_name} ${me.last_name} · @${me.telegram}`;
+    $("ava").textContent = ((me.first_name || "?")[0] || "?").toUpperCase();
     ping();
     await loadNav();
     const last = U.store.get("tt_last_test");
@@ -311,7 +314,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
 
   function welcome() {
     current = null; markActive(); setTop("");
-    $("content").innerHTML = `<div class="card"><h2>Xush kelibsiz! 👋</h2>
+    $("content").innerHTML = `<div class="card hero"><h2>Xush kelibsiz! 👋</h2>
       <p>Chap menyudan darsni tanlang va testni boshlang.</p>
       <ul class="muted">
         <li>Har bir testga <b>${MAX} ta urinish</b> beriladi.</li>
@@ -483,6 +486,11 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     window.scrollTo(0, 0);
   }
 
+  const IC = {
+    book: '<svg viewBox="0 0 24 24"><path d="M3 5.5C5.5 4 9 4 12 6c3-2 6.5-2 9-.5V19c-2.5-1.5-6-1.5-9 .5-3-2-6.5-2-9-.5z M12 6v13.5"/></svg>',
+    check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.5 12.3l3 3 6-6.3"/></svg>',
+    cup: '<svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11 M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5 M12 14v4 M8 20h8"/></svg>'
+  };
   // ---------- natijalarim ----------
   $("historyBtn").onclick = async () => {
     if (run && !confirm("Test yakunlanmagan. Chiqsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
@@ -498,9 +506,9 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     $("content").innerHTML = `<div class="card hero"><h2>📊 Mening <span class="accent">natijalarim</span></h2>
       <p class="muted small">Bu yerda faqat sizning natijalaringiz ko'rinadi.</p></div>
       <div class="stats sum">
-        <div class="stat"><span class="muted small">📚 Umumiy testlar</span><b>${tests.length}</b></div>
-        <div class="stat"><span class="muted small">✅ Bajarilgan testlar</span><b>${doneN}</b></div>
-        <div class="stat"><span class="muted small">🏆 Umumiy natija</span><b>${pctAll}%</b></div>
+        <div class="stat"><span class="ic">${IC.book}</span><div><span class="muted small">Umumiy testlar</span><b>${tests.length}</b></div></div>
+        <div class="stat"><span class="ic">${IC.check}</span><div><span class="muted small">Bajarilgan testlar</span><b>${doneN}</b></div></div>
+        <div class="stat"><span class="ic">${IC.cup}</span><div><span class="muted small">Umumiy natija</span><b>${pctAll}%</b></div></div>
       </div>` +
       (ids.length ? ids.map(id => {
         const g = by[id]; g.list.sort((a, b) => a.attempt_no - b.attempt_no);
@@ -510,7 +518,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
             <td>${a.finished_at ? U.dur(a.seconds) : `<span class="badge bad">tugallanmagan</span>`}</td>
             <td>${a.finished_at ? `<b>${a.score}</b> / ${a.total}` : "—"}</td></tr>`).join("")}
           </table></div></div>`;
-      }).join("") : `<div class="card muted">Hali birorta test ishlamagansiz.</div>`);
+      }).join("") : `<div class="card note">ⓘ&nbsp; Hali birorta test ishlamagansiz.</div>`);
   };
 
   // ---------- fon tanlash ----------
