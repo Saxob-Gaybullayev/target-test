@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 
@@ -69,8 +69,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js"></script>
-<script src="api.js"></script>
+<script src="config.js?v=4"></script>
+<script src="api.js?v=4"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -252,7 +252,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
         <div class="row" style="margin-top:16px">
           ${left > 0 ? `<button class="btn primary" id="startBtn" type="button">${r.used ? "Keyingi urinishni boshlash" : "Testni boshlash"} (${left} ta qoldi)</button>`
                      : r.perfect ? `<span class="badge ok">🎉 100% — test topshirildi</span>` : `<span class="badge ok">Barcha urinishlar tugagan</span>`}
-          ${r.finished >= r.max || r.perfect ? `<button class="btn" id="reviewBtn" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
+          ${r.used >= r.max || r.perfect ? `<button class="btn" id="reviewBtn" type="button">✅ To'g'ri javoblarni ko'rish</button>` : ""}
         </div>
         ${left > 0 ? `<p class="muted small" style="margin-top:12px">Boshlaganingizdan keyin sahifani yopsangiz ham urinish hisoblanadi. Test paytida boshqa oyna yoki ilovaga o'tish qayd qilinadi.</p>` : ""}
       </div>`;
@@ -306,14 +306,18 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
       <div class="card">
         <div class="row"><span class="muted small">${esc(current.title)} · ${run.no}-urinish</span><span class="space"></span>
           <span class="badge">${run.i + 1} / ${n}</span></div>
-        <div class="progress"><div style="width:${(run.i) / n * 100}%"></div></div>
+        <div class="progress"><div style="width:${Object.keys(run.answers).length / n * 100}%"></div></div>
+        <div class="q-nav">${run.questions.map((x, k) => `<button type="button" class="q-dot ${k === run.i ? "cur" : ""} ${run.answers[x.id] ? "done" : ""}" data-k="${k}">${k + 1}</button>`).join("")}</div>
         <p class="q-prompt">${esc(q.prompt)}</p>
         ${q.image ? `<img class="q-img" src="${esc(q.image)}" alt="Savol rasmi" title="Kattalashtirish uchun bosing" onclick="window.zoomImg(this.src)">` : ""}
         <div id="opts">${q.options.map(o => `<button type="button" class="opt ${run.answers[q.id] === o.id ? "sel" : ""}" data-id="${esc(o.id)}">${esc(o.text)}</button>`).join("")}</div>
         <div id="awayNote"></div>
-        <div class="row end" style="margin-top:8px">
-          <button class="btn primary" id="nextBtn" type="button" ${run.answers[q.id] ? "" : "disabled"}>${last ? "Yakunlash ✓" : "Keyingi →"}</button>
+        <div class="row" style="margin-top:8px">
+          ${run.i > 0 ? `<button class="btn" id="prevBtn" type="button">← Orqaga</button>` : ""}
+          <span class="space"></span>
+          <button class="btn primary" id="nextBtn" type="button" ${run.answers[q.id] ? "" : "disabled"}>${last ? "Testni tugatish ✓" : "Keyingi →"}</button>
         </div>
+        <div id="finishNote"></div>
       </div>`;
     renderAwayNote();
     run.shownAt = performance.now();
@@ -322,9 +326,17 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
       $("opts").querySelectorAll(".opt").forEach(x => x.classList.toggle("sel", x === b));
       $("nextBtn").disabled = false;
     });
+    const leave = () => { run.ms[q.id] = (run.ms[q.id] || 0) + Math.round(performance.now() - run.shownAt); };
+    const go = k => { leave(); run.confirm = false; run.i = k; renderQuestion(); };
+    if ($("prevBtn")) $("prevBtn").onclick = () => go(run.i - 1);
+    $("content").querySelectorAll(".q-dot").forEach(b => b.onclick = () => { const k = +b.dataset.k; if (k !== run.i) go(k); });
     $("nextBtn").onclick = () => {
-      run.ms[q.id] = (run.ms[q.id] || 0) + Math.round(performance.now() - run.shownAt);
-      if (last) finish(); else { run.i++; renderQuestion(); }
+      if (!last) return go(run.i + 1);
+      const miss = run.questions.map((x, k) => run.answers[x.id] ? null : k + 1).filter(Boolean);
+      if (miss.length) { $("finishNote").innerHTML = `<div class="msg warn small">Javob berilmagan savollar: ${miss.join(", ")}. Yuqoridagi raqamlarni bosib o'ting.</div>`; return; }
+      if (!run.confirm) { run.confirm = true; $("nextBtn").textContent = "Ha, tugatish ✓";
+        $("finishNote").innerHTML = `<div class="msg warn small">Tugatgandan keyin javoblarni o'zgartirib bo'lmaydi. Ishonchingiz komil bo'lsa, yana bir marta bosing.</div>`; return; }
+      leave(); finish();
     };
   }
 

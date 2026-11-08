@@ -167,3 +167,9 @@ tr.click:hover td { background: #f1f8f3; }
   .main { padding: 16px; }
   .card { padding: 18px; }
 }
+
+/* savollar orasida yurish */
+.q-nav { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px; }
+.q-dot { width:34px; height:34px; border-radius:999px; border:1px solid var(--line, #d6e4dc); background:#fff; color:inherit; font:inherit; font-size:14px; cursor:pointer; }
+.q-dot.done { background:#e3f4ea; border-color:var(--brand-2, #1f9d55); color:var(--brand, #0f5a3c); }
+.q-dot.cur { outline:2px solid var(--brand-2, #1f9d55); outline-offset:1px; font-weight:700; }
