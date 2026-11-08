@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=9">
-  <link rel="stylesheet" href="fon.css?v=9">
+  <link rel="stylesheet" href="style.css?v=10">
+  <link rel="stylesheet" href="fon.css?v=10">
   <script>try { var _t = localStorage.getItem("tt_theme"); if (_t) document.documentElement.dataset.theme = _t; } catch (e) {}</script>
 </head>
 <body>
@@ -85,6 +85,7 @@
         <b id="sideTitle">Target kursi</b>
         <div class="me"><span class="ava" id="ava">👤</span><span class="muted small" id="meName"></span></div>
       </div>
+      <button class="home-btn" id="homeBtn" type="button"><span class="ic"><svg viewBox="0 0 24 24"><path d="M3 11l9-7 9 7 M5 10v10h5v-6h4v6h5V10"/></svg></span>Asosiy sahifa</button>
       <nav id="nav"></nav>
       <div class="foot">
         <button class="btn sm" id="historyBtn" type="button">📊 Natijalarim</button>
@@ -109,8 +110,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=9"></script>
-<script src="api.js?v=9"></script>
+<script src="config.js?v=10"></script>
+<script src="api.js?v=10"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -242,7 +243,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     ping();
     await loadNav();
     const last = U.store.get("tt_last_test");
-    if (last && tests.some(t => t.id === last)) openTest(last); else welcome();
+    home();
   }
 
   // ---------- chap menyu ----------
@@ -304,6 +305,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
   }
   function markActive() {
     document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", current && b.dataset.id === current.id));
+    document.querySelectorAll(".home-btn").forEach(b => b.classList.remove("active"));
   }
 
   // telefon menyusi
@@ -313,7 +315,42 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
 
   function setTop(t) { $("topTitle").textContent = t || ""; }
 
-  function welcome() {
+  // ---------- asosiy sahifa (dashboard) ----------
+  async function summary() {
+    const h = await API.rpc("my_history", { p_token: token });
+    if (!h.ok) { relogin(); return null; }
+    const bestBy = {}; h.items.forEach(a => { if (a.finished_at) bestBy[a.test_id] = Math.max(bestBy[a.test_id] || 0, a.score); });
+    const tot = tests.reduce((s, t) => s + t.count, 0), got = tests.reduce((s, t) => s + (bestBy[t.id] || 0), 0);
+    const doneN = tests.filter(t => t.id in bestBy).length;
+    return { h, doneN, pct: tot ? Math.round(got / tot * 100) : 0 };
+  }
+  function dashHtml(S, sub) {
+    return `<div class="card hero"><div class="hero-row"><span class="hero-ic">${IC.bars}</span><div>
+        <h2>Mening <span class="accent">natijalarim</span></h2><p class="muted">${sub}</p></div></div></div>
+      <div class="card note"><span class="note-ic">i</span><span>${S.doneN ? `Siz ${S.doneN} ta testni ishladingiz. Davom eting!` : "Hali birorta test ishlamagansiz."}</span></div>
+      <div class="stats sum">
+        <div class="stat"><span class="ic">${IC.layers}</span><div><span class="muted small">Umumiy testlar</span><b>${tests.length}</b></div></div>
+        <div class="stat"><span class="ic">${IC.check}</span><div><span class="muted small">Bajarilgan testlar</span><b>${S.doneN}</b></div></div>
+        <div class="stat"><span class="ic">${IC.cup}</span><div><span class="muted small">Umumiy natija</span><b>${S.pct}%</b></div></div>
+      </div>`;
+  }
+  async function home() {
+    if (run && !confirm("Test yakunlanmagan. Chiqsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
+    run = null; closeMenu(); current = null; markActive(); setTop("Asosiy sahifa");
+    document.querySelectorAll(".home-btn").forEach(b => b.classList.add("active"));
+    const S = await summary(); if (!S) return;
+    $("content").innerHTML = dashHtml(S, "Bu yerda faqat sizning natijalaringiz ko'rinadi.") + `
+      <div class="card"><h2 style="font-size:18px">Qanday ishlaydi?</h2>
+      <ul class="muted" style="margin:6px 0 0">
+        <li>Chap menyudan darsni tanlang va testni boshlang.</li>
+        <li>Har bir testga <b>${MAX} ta urinish</b> beriladi.</li>
+        <li>To'g'ri javoblar ${MAX}-urinishdan keyin yoki 100% olganda ochiladi.</li>
+        <li>Test paytida boshqa oynaga o'tish qayd qilinadi.</li>
+      </ul></div>`;
+  }
+  $("homeBtn").onclick = home;
+  function welcome() { return home(); }
+  function _oldWelcome() {
     current = null; markActive(); setTop("");
     $("content").innerHTML = `<div class="card hero"><h2>Xush kelibsiz! 👋</h2>
       <p>Chap menyudan darsni tanlang va testni boshlang.</p>
@@ -490,27 +527,19 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
   const IC = {
     book: '<svg viewBox="0 0 24 24"><path d="M3 5.5C5.5 4 9 4 12 6c3-2 6.5-2 9-.5V19c-2.5-1.5-6-1.5-9 .5-3-2-6.5-2-9-.5z M12 6v13.5"/></svg>',
     check: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M7.5 12.3l3 3 6-6.3"/></svg>',
-    cup: '<svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11 M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5 M12 14v4 M8 20h8"/></svg>'
+    cup: '<svg viewBox="0 0 24 24"><path d="M7 4h10v5a5 5 0 0 1-10 0z M7 6H4v1.5A3.5 3.5 0 0 0 7.5 11 M17 6h3v1.5a3.5 3.5 0 0 1-3.5 3.5 M12 14v4 M8 20h8"/></svg>',
+    layers: '<svg viewBox="0 0 24 24"><path d="M12 3l9 4.5-9 4.5-9-4.5z M3 12l9 4.5 9-4.5 M3 16.5L12 21l9-4.5"/></svg>',
+    bars: '<svg viewBox="0 0 24 24" class="fill"><rect x="4" y="13" width="4" height="7" rx="1"/><rect x="10" y="9" width="4" height="11" rx="1"/><rect x="16" y="4" width="4" height="16" rx="1"/></svg>'
   };
   // ---------- natijalarim ----------
   $("historyBtn").onclick = async () => {
     if (run && !confirm("Test yakunlanmagan. Chiqsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
     run = null; closeMenu(); current = null; markActive(); setTop("Natijalarim");
-    const h = await API.rpc("my_history", { p_token: token });
-    if (!h.ok) return relogin();
+    const S = await summary(); if (!S) return; const h = S.h;
     const by = {};
     h.items.forEach(a => { (by[a.test_id] = by[a.test_id] || { title: a.title, section: a.section, list: [] }).list.push(a); });
     const ids = Object.keys(by);
-    const bestBy = {}; h.items.forEach(a => { if (a.finished_at) bestBy[a.test_id] = Math.max(bestBy[a.test_id] || 0, a.score); });
-    const tot = tests.reduce((s, t) => s + t.count, 0), got = tests.reduce((s, t) => s + (bestBy[t.id] || 0), 0);
-    const doneN = tests.filter(t => t.id in bestBy).length, pctAll = tot ? Math.round(got / tot * 100) : 0;
-    $("content").innerHTML = `<div class="card hero"><h2>📊 Mening <span class="accent">natijalarim</span></h2>
-      <p class="muted small">Bu yerda faqat sizning natijalaringiz ko'rinadi.</p></div>
-      <div class="stats sum">
-        <div class="stat"><span class="ic">${IC.book}</span><div><span class="muted small">Umumiy testlar</span><b>${tests.length}</b></div></div>
-        <div class="stat"><span class="ic">${IC.check}</span><div><span class="muted small">Bajarilgan testlar</span><b>${doneN}</b></div></div>
-        <div class="stat"><span class="ic">${IC.cup}</span><div><span class="muted small">Umumiy natija</span><b>${pctAll}%</b></div></div>
-      </div>` +
+    $("content").innerHTML = dashHtml(S, "Har bir test bo'yicha urinishlaringiz tarixi.") +
       (ids.length ? ids.map(id => {
         const g = by[id]; g.list.sort((a, b) => a.attempt_no - b.attempt_no);
         return `<div class="card"><div class="muted small">${esc(g.section)}</div><h2 style="font-size:17px">${esc(g.title)}</h2>
@@ -519,7 +548,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
             <td>${a.finished_at ? U.dur(a.seconds) : `<span class="badge bad">tugallanmagan</span>`}</td>
             <td>${a.finished_at ? `<b>${a.score}</b> / ${a.total}` : "—"}</td></tr>`).join("")}
           </table></div></div>`;
-      }).join("") : `<div class="card note">ⓘ&nbsp; Hali birorta test ishlamagansiz.</div>`);
+      }).join("") : "");
   };
 
   // ---------- fon tanlash ----------

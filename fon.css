@@ -177,7 +177,7 @@ html[data-theme="mtg"] {
   --card-line: rgba(80, 220, 190, .28); --card-glow: 0 0 26px rgba(30, 200, 160, .12);
   --active-line: #f5c542; --active-glow: 0 0 18px rgba(245, 180, 60, .4); --btn-glow: 0 0 22px rgba(245, 180, 60, .4);
   --c1: #1fd1a0; --c2: #f2a93b; --c3: #7b6dff;
-  --hero: url(fon/mtg.webp); --hero-ar: 558 / 206;
+  --hero: url(fon/mtg.webp);
   --waves: block; --w0: #1fd1a0; --w1: #f2a93b; --w2: #f5c542; --wf: #1fb08a; --line-op: .75;
 }
 
@@ -192,7 +192,7 @@ html[data-theme="mtb"] {
   --card-line: rgba(90, 210, 255, .3); --card-glow: 0 0 28px rgba(24, 180, 240, .15);
   --active-glow: 0 0 20px rgba(92, 232, 255, .4); --btn-glow: 0 0 22px rgba(92, 232, 255, .4);
   --c1: #2e9bff; --c2: #19d3a6; --c3: #8b7bff;
-  --hero: url(fon/mtb.webp); --hero-ar: 588 / 190;
+  --hero: url(fon/mtb.webp);
   --waves: block; --w0: #12b6e0; --w1: #5ce8ff; --w2: #5a6bff; --wf: #1a7fe0; --line-op: .8;
 }
 
@@ -206,7 +206,7 @@ html[data-theme="lilac"] {
   --brand-grad: linear-gradient(135deg, #8a5cf6, #6d3fe0); --on-brand: #fff; --accent: #6d3fe0;
   --card-line: #ece3fb; --card-glow: 0 10px 34px rgba(110, 70, 220, .1);
   --c1: #8a5cf6; --c2: #2fbf7a; --c3: #f59e2b;
-  --hero: url(fon/lilac.webp); --hero-ar: 505 / 228;
+  --hero: url(fon/lilac.webp);
   --waves: block; --w0: #b79bff; --w1: #ffc49a; --w2: #b79bff; --area-op: .35; --line-op: .35;
 }
 
@@ -218,7 +218,7 @@ html[data-theme="mint"] {
   --brand: #0f7a4f; --brand-2: #19a56b; --accent: #0f7a4f;
   --card-line: #e1f0e8; --card-glow: 0 10px 30px rgba(15, 122, 79, .08);
   --c1: #19a56b; --c2: #2fbf7a; --c3: #f59e2b;
-  --hero: url(fon/mint.webp); --hero-ar: 400 / 172;
+  --hero: url(fon/mint.webp);
   --waves: block; --w0: #8fdcb8; --w1: #bdeccf; --w2: #8fdcb8; --area-op: .35; --line-op: .3;
 }
 
@@ -291,3 +291,91 @@ html[data-theme="sky"] {
   --hero: url(fon/sky.webp);
   --land: block; --land-img: url(fon/land.webp);
 }
+
+/* =====================================================================
+   ASOSIY SAHIFA tugmasi + SHISHA (glass) effekti — barcha fonlar uchun
+   Rang chetda kuchli, markazga borgan sari so'nadi.
+   ===================================================================== */
+.home-btn { display: flex; align-items: center; gap: 10px; width: calc(100% - 20px); margin: 10px 10px 0; padding: 11px 14px; border-radius: 14px; cursor: pointer;
+  border: 1px solid var(--line); background: var(--panel-2); color: var(--text); font: inherit; font-weight: 700; text-align: left; transition: background .15s, box-shadow .15s; }
+.home-btn:hover { border-color: var(--line-2); }
+.home-btn .ic svg, .hero-ic svg { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; }
+.home-btn.active { background: var(--brand-grad, var(--brand)); color: var(--on-brand); border-color: transparent; }
+.hero-row { display: flex; align-items: center; gap: 18px; }
+.hero-ic { width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0; display: grid; place-items: center; background: var(--brand-soft); color: var(--accent, var(--brand)); }
+.hero-ic svg.fill { fill: currentColor; stroke: none; width: 32px; height: 32px; }
+.card.note { display: flex; align-items: center; gap: 14px; }
+.note-ic { width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; display: grid; place-items: center; border: 2.5px solid currentColor; font: 800 17px/1 Georgia, serif; color: var(--warn); }
+@media (max-width: 600px) { .hero-ic { width: 48px; height: 48px; } }
+
+/* --- shisha: umumiy retsept. --g = rang --- */
+html[data-theme] :is(.home-btn.active, .nav-item.active, .card.hero, .card.note, .stats.sum .stat, .sec-title) {
+  position: relative; overflow: hidden;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(130% 160% at 50% 50%, transparent 38%, color-mix(in srgb, var(--g) 30%, transparent) 100%),
+    linear-gradient(135deg, color-mix(in srgb, var(--g) 26%, transparent), color-mix(in srgb, var(--g) 7%, transparent) 55%, color-mix(in srgb, var(--g) 16%, transparent)),
+    var(--glass-base, rgba(8, 20, 18, .55));
+  border: 1.5px solid color-mix(in srgb, var(--g) 85%, #fff 15%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    inset 0 0 18px color-mix(in srgb, var(--g) 45%, transparent),
+    0 0 14px color-mix(in srgb, var(--g) 45%, transparent),
+    0 0 38px color-mix(in srgb, var(--g) 18%, transparent);
+  backdrop-filter: blur(18px) saturate(140%); -webkit-backdrop-filter: blur(18px) saturate(140%);
+  color: var(--text);
+}
+html[data-theme] .home-btn.active, html[data-theme] .nav-item.active { --g: var(--active-c, var(--brand-2)); color: var(--text); }
+html[data-theme] .nav-item.active .ring b { background: var(--solid); color: var(--text); }
+html[data-theme] .nav-item.active .badge, html[data-theme] .nav-item.active .badge:not(.ok):not(.warn) { background: color-mix(in srgb, var(--g) 35%, transparent); color: var(--text); }
+html[data-theme] .sec-title { --g: var(--brand-2); }
+html[data-theme] .card.hero { --g: var(--hero-c, var(--brand-2)); min-height: 190px; }
+html[data-theme] .card.note { --g: var(--note-c, #f2b632); color: var(--text); font-size: 17px; font-weight: 600;
+  background:
+    linear-gradient(90deg, color-mix(in srgb, var(--note-c, #f2b632) 30%, transparent), color-mix(in srgb, var(--brand-2) 10%, transparent) 70%),
+    var(--glass-base, rgba(8, 20, 18, .55)); }
+html[data-theme] .note-ic { color: var(--note-c, #f2b632); box-shadow: 0 0 12px color-mix(in srgb, var(--note-c, #f2b632) 60%, transparent); }
+html[data-theme] .stats.sum .stat { --g: var(--cc); }
+html[data-theme] .hero-ic { background: color-mix(in srgb, var(--hero-c, var(--brand-2)) 22%, rgba(0, 0, 0, .25)); color: var(--accent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--hero-c, var(--brand-2)) 45%, transparent), 0 6px 18px rgba(0, 0, 0, .25); }
+html[data-theme] .stats.sum .stat .ic { background: color-mix(in srgb, var(--cc) 30%, rgba(0, 0, 0, .2)); }
+/* kartochka ichidagi to'lqin (pastki o'ng) */
+html[data-theme] .stats.sum .stat::after { content: ""; position: absolute; inset: auto 0 0 25%; height: 70%; border-radius: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--cc) 75%, transparent));
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100 C 90 100 120 30 200 35 S 280 10 300 0 L300 100Z' fill='%23000'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100 C 90 100 120 30 200 35 S 280 10 300 0 L300 100Z' fill='%23000'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  opacity: .55; pointer-events: none; }
+html[data-theme] .stats.sum .stat::before { content: ""; position: absolute; inset: auto 0 0 25%; height: 72%;
+  background: color-mix(in srgb, var(--cc) 95%, #fff);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100 C 90 100 120 30 200 35 S 280 10 300 0' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 300 100' preserveAspectRatio='none'%3E%3Cpath d='M0 100 C 90 100 120 30 200 35 S 280 10 300 0' fill='none' stroke='%23000' stroke-width='2'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+  filter: drop-shadow(0 0 4px var(--cc)); pointer-events: none; }
+html[data-theme] .stats.sum .stat > * { position: relative; z-index: 1; }
+html[data-theme] .card.hero::after { -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 22%); mask-image: linear-gradient(90deg, transparent 0%, #000 22%);
+  background: var(--hero, none) var(--hero-pos, right 12px bottom 0) / auto var(--hero-h, 100%) no-repeat; }
+
+/* yorug' fonlar uchun shisha asosi */
+html:is([data-theme="lilac"], [data-theme="mint"], [data-theme="sky"], [data-theme="navymint"]) {
+  --glass-base: rgba(255, 255, 255, .72);
+}
+html:is([data-theme="lilac"], [data-theme="mint"], [data-theme="sky"], [data-theme="navymint"]) :is(.home-btn.active, .nav-item.active, .card.hero, .card.note, .stats.sum .stat, .sec-title) {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 0 16px color-mix(in srgb, var(--g) 22%, transparent), 0 10px 26px color-mix(in srgb, var(--g) 16%, transparent);
+  border-color: color-mix(in srgb, var(--g) 40%, #fff);
+}
+html[data-theme="navymint"] .sidebar :is(.home-btn.active, .nav-item.active, .sec-title) { --glass-base: rgba(10, 30, 50, .6); --text: #fff; color: #fff; }
+html[data-theme="navymint"] .sidebar .sec-title { background: var(--brand-grad); }
+
+/* har bir fon: aktiv / banner / izoh rangi */
+html[data-theme="neon"]    { --active-c: #b46bff; --hero-c: #6f6bff; --note-c: #f2b632; --hero-h: 92%; }
+html[data-theme="emerald"] { --active-c: #f2c14a; --hero-c: #22d39a; --note-c: #f2c14a; }
+html[data-theme="trophy"]  { --active-c: #ffd257; --hero-c: #2bf0b0; --note-c: #ffcf4a; --hero-h: 96%; }
+html[data-theme="lux"]     { --active-c: #f0c96a; --hero-c: #c79a3a; --note-c: #f0c96a; --hero-h: 100%; --glass-base: rgba(20, 16, 26, .7); }
+html[data-theme="mtg"]     { --active-c: #f5c542; --hero-c: #1fd1a0; --note-c: #f5b23a; --hero-h: 105%; --hero-pos: right -10px bottom -6px; }
+html[data-theme="mtb"]     { --active-c: #18d4f0; --hero-c: #3aa8ff; --note-c: #f5a53a; --hero-h: 105%; --hero-pos: right -10px bottom -6px; --glass-base: rgba(8, 24, 48, .6); }
+html[data-theme="lilac"]   { --active-c: #8a5cf6; --hero-c: #8a5cf6; --note-c: #f59e2b; --hero-h: 108%; }
+html[data-theme="mint"]    { --active-c: #19a56b; --hero-c: #19a56b; --note-c: #f59e2b; --hero-h: 100%; }
+html[data-theme="navymint"]{ --active-c: #16b673; --hero-c: #16b673; --note-c: #f59e2b; --hero-h: 100%; }
+html[data-theme="sky"]     { --active-c: #3b82f6; --hero-c: #3b82f6; --note-c: #f97316; --hero-h: 110%; --hero-pos: right -10px bottom -8px; }
+html[data-theme="neon"] { --glass-base: rgba(14, 18, 56, .6); }
+html:is([data-theme="lilac"], [data-theme="mint"], [data-theme="sky"], [data-theme="navymint"]) .hero-ic { background: color-mix(in srgb, var(--hero-c) 18%, #fff); }
+html:is([data-theme="lilac"], [data-theme="mint"], [data-theme="sky"], [data-theme="navymint"]) .stats.sum .stat .ic { background: color-mix(in srgb, var(--cc) 18%, #fff); }
