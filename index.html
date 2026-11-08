@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=4">
+  <link rel="stylesheet" href="style.css?v=5">
 </head>
 <body>
 
@@ -69,8 +69,8 @@
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=4"></script>
-<script src="api.js?v=4"></script>
+<script src="config.js?v=5"></script>
+<script src="api.js?v=5"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -179,25 +179,41 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
       s.items.push(t);
     });
     const closed = JSON.parse(U.store.get("tt_closed") || "[]");
-    $("nav").innerHTML = sections.map(s => `
+    const openSub = JSON.parse(U.store.get("tt_opensub") || "{}");
+    const bestOf = t => { const d = done[t.id] || []; return d.length ? Math.max(...d.map(a => a.score)) : 0; };
+    const ring = (pct, cls) => `<span class="ring ${cls}" style="--p:${pct}" title="${pct}%"><b>${pct}%</b></span>`;
+    $("nav").innerHTML = sections.map(s => {
+      const tot = s.items.reduce((a, t) => a + t.count, 0), got = s.items.reduce((a, t) => a + bestOf(t), 0);
+      const secPct = tot ? Math.round(got / tot * 100) : 0;
+      const groups = [["txt", "📝 Testlar", s.items.filter(t => !/r$/.test(t.id))], ["img", "🖼 Rasmli testlar", s.items.filter(t => /r$/.test(t.id))]].filter(g => g[2].length);
+      return `
       <div class="sec ${closed.includes(s.name) ? "closed" : ""}" data-sec="${esc(s.name)}">
-        <button class="sec-title" type="button"><span>${esc(s.name)}</span><span class="arrow">▾</span></button>
+        <button class="sec-title" type="button"><span>${esc(s.name)}</span><span class="sec-right">${ring(secPct, "pink big")}<span class="arrow">▾</span></span></button>
         <div class="sec-items">
-          ${[["📝 Testlar", s.items.filter(t => !/r$/.test(t.id))], ["🖼 Rasmli testlar", s.items.filter(t => /r$/.test(t.id))]]
-            .filter(g => g[1].length).map(g => `<div class="sub-title">${g[0]}</div>` + g[1].map(t => {
+          ${groups.map(([key, label, list]) => `<div class="sub ${openSub[s.name] === key ? "" : "closed"}" data-key="${key}">
+            <button class="sub-title" type="button"><span>${label}</span><span class="arrow">▾</span></button>
+            <div class="sub-items">` + list.map(t => {
             const d = done[t.id] || []; const n = d.length;
-            const best = n ? Math.max(...d.map(a => a.score)) : null;
+            const best = bestOf(t), pct = t.count ? Math.round(best / t.count * 100) : 0;
             const cls = (n >= MAX || (n && best === t.count)) ? "ok" : n ? "warn" : "";
             return `<button class="nav-item" type="button" data-id="${esc(t.id)}"><span>${esc(t.title)}</span>
-              <span class="badge ${cls}">${n ? `${best}/${t.count}` : "yangi"}</span></button>`;
-          }).join("")).join("")}
+              <span class="item-right"><span class="badge ${cls}">${n ? `${best}/${t.count}` : "yangi"}</span>${ring(pct, "red")}</span></button>`;
+          }).join("") + `</div></div>`).join("")}
         </div>
-      </div>`).join("") || `<div class="muted small" style="padding:12px">Hozircha testlar yo'q.</div>`;
+      </div>`; }).join("") || `<div class="muted small" style="padding:12px">Hozircha testlar yo'q.</div>`;
 
     $("nav").querySelectorAll(".sec-title").forEach(b => b.onclick = () => {
       const box = b.parentElement; box.classList.toggle("closed");
       const list = [...document.querySelectorAll(".sec.closed")].map(x => x.dataset.sec);
       U.store.set("tt_closed", JSON.stringify(list));
+    });
+    // bo'lim ichida faqat bitta guruh ochiq turadi
+    $("nav").querySelectorAll(".sub-title").forEach(b => b.onclick = () => {
+      const sub = b.parentElement, sec = sub.closest(".sec"), willOpen = sub.classList.contains("closed");
+      sec.querySelectorAll(".sub").forEach(x => x.classList.add("closed"));
+      if (willOpen) sub.classList.remove("closed");
+      const st = JSON.parse(U.store.get("tt_opensub") || "{}");
+      st[sec.dataset.sec] = willOpen ? sub.dataset.key : ""; U.store.set("tt_opensub", JSON.stringify(st));
     });
     $("nav").querySelectorAll(".nav-item").forEach(b => b.onclick = () => {
       if (run && !confirm("Test yakunlanmagan. Boshqa joyga o'tsangiz, bu urinish yo'qoladi. Davom etasizmi?")) return;
