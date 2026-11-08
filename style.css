@@ -19,6 +19,11 @@
   --warn-soft: #fff6dc;   /* och sariq */
   --radius: 16px;
   --shadow: 0 1px 2px rgba(16, 40, 28, .04), 0 6px 20px rgba(16, 40, 28, .05);
+  --on-brand: #fff;
+  --input: #fff;
+  --solid: #fff;
+  --head-bg: linear-gradient(180deg, #f4faf6, #fff);
+  --topbar: rgba(255, 255, 255, .92);
   --shadow-hover: 0 2px 4px rgba(16, 40, 28, .06), 0 10px 28px rgba(16, 40, 28, .09);
 }
 * { box-sizing: border-box; }
@@ -43,7 +48,7 @@ a { color: var(--brand); }
 }
 .btn:hover { border-color: var(--line-2); background: var(--panel-2); }
 .btn:active { transform: translateY(1px); }
-.btn.primary { background: var(--brand); border-color: var(--brand); color: #fff; box-shadow: 0 4px 14px rgba(15, 90, 60, .22); }
+.btn.primary { background: var(--brand-grad, var(--brand)); border-color: var(--brand); color: var(--on-brand); box-shadow: 0 4px 14px rgba(15, 90, 60, .22); }
 .btn.primary:hover { background: var(--brand-2); border-color: var(--brand-2); }
 .btn.danger { color: var(--bad); }
 .btn.danger:hover { background: var(--bad-soft); border-color: #f3c9c3; }
@@ -53,7 +58,7 @@ a { color: var(--brand); }
 label.field { display: block; margin-bottom: 14px; }
 label.field span { display: block; font-size: 13px; color: var(--muted); margin-bottom: 5px; font-weight: 500; }
 input[type=text], input[type=password], input[type=email], input[type=search], textarea, select {
-  width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: #fff; color: var(--text);
+  width: 100%; padding: 11px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--input); color: var(--text);
   transition: border-color .15s, box-shadow .15s;
 }
 input:hover, textarea:hover { border-color: var(--line-2); }
@@ -73,7 +78,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--brand-2); box-s
 .tabs { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); padding: 4px; border-radius: 999px; margin: 18px 0; }
 .tabs button { flex: 1; border: 0; background: transparent; padding: 8px; border-radius: 999px; cursor: pointer; color: var(--muted); font-weight: 500; transition: background .15s, color .15s; }
 .tabs button:hover { color: var(--text); }
-.tabs button.active { background: var(--brand); color: #fff; box-shadow: 0 2px 8px rgba(15, 90, 60, .25); }
+.tabs button.active { background: var(--brand-grad, var(--brand)); color: var(--on-brand); box-shadow: 0 2px 8px rgba(15, 90, 60, .25); }
 
 /* ============ Asosiy tuzilish ============ */
 .layout { display: flex; min-height: 100%; }
@@ -81,7 +86,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--brand-2); box-s
   width: 290px; flex-shrink: 0; background: var(--panel); border-right: 1px solid var(--line);
   display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0;
 }
-.sidebar .head { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); background: linear-gradient(180deg, #f4faf6, #fff); }
+.sidebar .head { padding: 20px 20px 16px; border-bottom: 1px solid var(--line); background: var(--head-bg); }
 .sidebar .head b { display: block; font-size: 16px; letter-spacing: -.01em; }
 .sidebar nav { flex: 1; overflow-y: auto; padding: 10px; }
 .sidebar .foot { padding: 12px; border-top: 1px solid var(--line); display: flex; gap: 8px; }
@@ -106,20 +111,20 @@ input:focus, textarea:focus { outline: none; border-color: var(--brand-2); box-s
 /* foiz halqalari */
 .ring { --p: 0; --c: #f08a8a; --t: #fbe3e3; width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
   background: conic-gradient(var(--c) calc(var(--p) * 1%), var(--t) 0); display: inline-grid; place-items: center; }
-.ring b { width: 23px; height: 23px; border-radius: 50%; background: #fff; display: grid; place-items: center; font-size: 8.5px; font-weight: 700; color: #c45656; letter-spacing: -.02em; }
+.ring b { width: 23px; height: 23px; border-radius: 50%; background: var(--solid); display: grid; place-items: center; font-size: 8.5px; font-weight: 700; color: #c45656; letter-spacing: -.02em; }
 .ring.pink { --c: #ec6fa8; --t: #fbe1ee; }
 .ring.pink b { color: #c43b7f; }
 .ring.big { width: 38px; height: 38px; }
 .ring.big b { width: 29px; height: 29px; font-size: 10px; }
-.nav-item.active .ring b { background: var(--brand); color: #fff; }
+.nav-item.active .ring b { background: var(--brand); color: var(--on-brand); }
 .nav-item {
   display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
   border: 1px solid transparent; background: transparent; text-align: left; padding: 9px 12px 9px 20px; border-radius: 12px; cursor: pointer; color: var(--text);
   margin-bottom: 2px; transition: background .15s, border-color .15s, color .15s;
 }
 .nav-item:hover { background: var(--panel-2); border-color: var(--line); }
-.nav-item.active, .nav-item.active:hover { background: var(--brand); color: #fff; border-color: var(--brand); box-shadow: 0 4px 12px rgba(15, 90, 60, .2); }
-.nav-item.active .badge { background: rgba(255, 255, 255, .18); color: #fff; }
+.nav-item.active, .nav-item.active:hover { background: var(--brand-grad, var(--brand)); color: var(--on-brand); border-color: var(--brand); box-shadow: 0 4px 12px rgba(15, 90, 60, .2); }
+.nav-item.active .badge { background: rgba(255, 255, 255, .18); color: var(--on-brand); }
 .badge { font-size: 12px; padding: 2px 9px; border-radius: 99px; background: var(--panel-2); color: var(--muted); white-space: nowrap; border: 1px solid var(--line); font-weight: 500; }
 .badge.ok { background: var(--ok-soft); color: var(--ok); border-color: #c6e8d4; }
 .badge.warn { background: var(--warn-soft); color: var(--warn); border-color: #f4e3ad; }
@@ -135,7 +140,7 @@ input:focus, textarea:focus { outline: none; border-color: var(--brand-2); box-s
 .progress div { height: 100%; background: linear-gradient(90deg, var(--brand), var(--brand-2)); border-radius: 99px; transition: width .25s; }
 .q-prompt { font-size: 18px; font-weight: 600; margin: 0 0 16px; letter-spacing: -.005em; }
 .opt {
-  display: block; width: 100%; text-align: left; border: 1.5px solid var(--line); background: #fff;
+  display: block; width: 100%; text-align: left; border: 1.5px solid var(--line); background: var(--input);
   padding: 13px 16px; border-radius: 14px; margin-bottom: 10px; cursor: pointer; color: var(--text);
   transition: border-color .15s, background .15s, box-shadow .15s, transform .05s;
 }
@@ -169,13 +174,13 @@ th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--li
 tr:last-child td { border-bottom: 0; }
 th { color: var(--muted); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; background: var(--panel-2); }
 tr.click { cursor: pointer; }
-tr.click:hover td { background: #f1f8f3; }
+tr.click:hover td { background: var(--panel-2); }
 
 /* ============ Telefon ============ */
 @media (max-width: 820px) {
   .layout { display: block; }
   .topbar {
-    display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: rgba(255, 255, 255, .92);
+    display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: var(--topbar);
     border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 20; backdrop-filter: blur(6px);
   }
   .sidebar { position: fixed; left: 0; top: 0; z-index: 30; transform: translateX(-100%); transition: transform .2s; box-shadow: 4px 0 24px rgba(0, 0, 0, .12); width: 84%; max-width: 320px; }
@@ -187,8 +192,8 @@ tr.click:hover td { background: #f1f8f3; }
 
 /* savollar orasida yurish */
 .q-nav { display:flex; flex-wrap:wrap; gap:6px; margin:10px 0 4px; }
-.q-dot { width:34px; height:34px; border-radius:999px; border:1px solid var(--line, #d6e4dc); background:#fff; color:inherit; font:inherit; font-size:14px; cursor:pointer; }
-.q-dot.done { background:#e3f4ea; border-color:var(--brand-2, #1f9d55); color:var(--brand, #0f5a3c); }
+.q-dot { width:34px; height:34px; border-radius:999px; border:1px solid var(--line, #d6e4dc); background:var(--input); color:inherit; font:inherit; font-size:14px; cursor:pointer; }
+.q-dot.done { background:var(--brand-soft); border-color:var(--brand-2, #1f9d55); color:var(--brand, #0f5a3c); }
 .q-dot.cur { outline:2px solid var(--brand-2, #1f9d55); outline-offset:1px; font-weight:700; }
 
 /* ===== PIN kataklari va kirish animatsiyasi ===== */
@@ -201,7 +206,7 @@ tr.click:hover td { background: #f1f8f3; }
 .otp-slot {
   --x: 0px; --y: 0px; position: absolute; left: 50%; top: 50%; width: 50px; height: 56px; margin: -28px 0 0 -25px;
   display: grid; place-items: center; font-size: 28px; font-weight: 700; color: var(--brand);
-  background: #fff; border: 1.5px solid var(--line); border-radius: 14px; box-shadow: 0 2px 6px rgba(15, 90, 60, .06);
+  background: var(--input); border: 1.5px solid var(--line); border-radius: 14px; box-shadow: 0 2px 6px rgba(15, 90, 60, .06);
   transform: translate(var(--x), var(--y));
   transition: transform .55s cubic-bezier(.34,1.45,.5,1), background .3s, border-color .3s, color .3s, opacity .3s, box-shadow .3s;
 }

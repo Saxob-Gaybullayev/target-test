@@ -4,9 +4,31 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Target kursi — testlar</title>
-  <link rel="stylesheet" href="style.css?v=6">
+  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="fon.css?v=7">
+  <script>try { var _t = localStorage.getItem("tt_theme"); if (_t) document.documentElement.dataset.theme = _t; } catch (e) {}</script>
 </head>
 <body>
+<!-- fon bezaklari (mavzuga qarab) -->
+<div class="deco" aria-hidden="true">
+  <div class="deco-hero"></div>
+  <svg class="deco-waves" viewBox="0 0 1200 400" preserveAspectRatio="none">
+    <defs>
+      <linearGradient id="wg1" x1="0" x2="1"><stop offset="0" class="w-s0"/><stop offset=".55" class="w-s1"/><stop offset="1" class="w-s2"/></linearGradient>
+      <linearGradient id="wg2" x1="0" x2="1"><stop offset="0" class="w-s2"/><stop offset=".5" class="w-s0"/><stop offset="1" class="w-s1"/></linearGradient>
+      <linearGradient id="wfill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" class="w-f0"/><stop offset="1" class="w-f1"/></linearGradient>
+      <filter id="wglow" x="-10%" y="-50%" width="120%" height="200%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+    <path class="w-area" d="M0 300 C 220 180, 420 330, 640 250 S 1000 120, 1200 170 L1200 400 L0 400 Z" fill="url(#wfill)"/>
+    <g class="w-lines" filter="url(#wglow)" fill="none">
+      <path d="M-20 290 C 220 170, 420 320, 640 245 S 1000 115, 1220 165" stroke="url(#wg1)" stroke-width="5"/>
+      <path d="M-20 310 C 230 200, 430 340, 650 268 S 1010 140, 1220 190" stroke="url(#wg1)" stroke-width="2.2" opacity=".8"/>
+      <path d="M-20 330 C 240 230, 440 355, 660 290 S 1020 170, 1220 215" stroke="url(#wg2)" stroke-width="1.4" opacity=".7"/>
+      <path d="M-20 350 C 250 260, 450 370, 670 312 S 1030 200, 1220 240" stroke="url(#wg2)" stroke-width="3" opacity=".55"/>
+    </g>
+    <g class="w-spark"></g>
+  </svg>
+</div>
 
 <!-- ================= KIRISH / RO'YXATDAN O'TISH ================= -->
 <div id="authView" class="auth-wrap hidden">
@@ -64,6 +86,7 @@
       <div class="foot">
         <button class="btn sm" id="historyBtn" type="button">📊 Natijalarim</button>
         <button class="btn sm" id="logoutBtn" type="button">Chiqish</button>
+        <button class="btn sm icon" id="themeBtn" type="button" title="Fonni tanlash" aria-label="Fonni tanlash">🎨</button>
       </div>
     </aside>
     <div id="shade" class="shade hidden"></div>
@@ -71,11 +94,20 @@
   </div>
 </div>
 
+<!-- fon tanlash oynasi -->
+<div id="themeBox" class="theme-box hidden" role="dialog" aria-modal="true" aria-labelledby="themeTitle">
+  <div class="theme-card">
+    <div class="row"><b id="themeTitle">🎨 Fonni tanlang</b><span class="space"></span><button class="btn sm" id="themeClose" type="button">✕</button></div>
+    <p class="muted small" style="margin:6px 0 14px">Tanlovingiz shu qurilmada saqlanadi.</p>
+    <div class="theme-grid" id="themeGrid"></div>
+  </div>
+</div>
+
 <div id="zoom" class="zoom hidden" onclick="this.classList.add('hidden')"><img id="zoomImg" alt=""><span class="zoom-x">✕</span></div>
 <script>window.zoomImg = src => { document.getElementById('zoomImg').src = src; document.getElementById('zoom').classList.remove('hidden'); };
 document.addEventListener('keydown', e => { if (e.key === 'Escape') document.getElementById('zoom').classList.add('hidden'); });</script>
-<script src="config.js?v=6"></script>
-<script src="api.js?v=6"></script>
+<script src="config.js?v=7"></script>
+<script src="api.js?v=7"></script>
 <script>
 (function () {
   const CFG = window.APP_CONFIG, MAX = CFG.MAX_ATTEMPTS || 3;
@@ -460,8 +492,16 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
     const by = {};
     h.items.forEach(a => { (by[a.test_id] = by[a.test_id] || { title: a.title, section: a.section, list: [] }).list.push(a); });
     const ids = Object.keys(by);
-    $("content").innerHTML = `<div class="card"><h2>📊 Mening natijalarim</h2>
-      <p class="muted small">Bu yerda faqat sizning natijalaringiz ko'rinadi.</p></div>` +
+    const bestBy = {}; h.items.forEach(a => { if (a.finished_at) bestBy[a.test_id] = Math.max(bestBy[a.test_id] || 0, a.score); });
+    const tot = tests.reduce((s, t) => s + t.count, 0), got = tests.reduce((s, t) => s + (bestBy[t.id] || 0), 0);
+    const doneN = tests.filter(t => t.id in bestBy).length, pctAll = tot ? Math.round(got / tot * 100) : 0;
+    $("content").innerHTML = `<div class="card hero"><h2>📊 Mening <span class="accent">natijalarim</span></h2>
+      <p class="muted small">Bu yerda faqat sizning natijalaringiz ko'rinadi.</p></div>
+      <div class="stats sum">
+        <div class="stat"><span class="muted small">📚 Umumiy testlar</span><b>${tests.length}</b></div>
+        <div class="stat"><span class="muted small">✅ Bajarilgan testlar</span><b>${doneN}</b></div>
+        <div class="stat"><span class="muted small">🏆 Umumiy natija</span><b>${pctAll}%</b></div>
+      </div>` +
       (ids.length ? ids.map(id => {
         const g = by[id]; g.list.sort((a, b) => a.attempt_no - b.attempt_no);
         return `<div class="card"><div class="muted small">${esc(g.section)}</div><h2 style="font-size:17px">${esc(g.title)}</h2>
@@ -472,6 +512,39 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') document.get
           </table></div></div>`;
       }).join("") : `<div class="card muted">Hali birorta test ishlamagansiz.</div>`);
   };
+
+  // ---------- fon tanlash ----------
+  const THEMES = [
+    ["", "Standart", "#f3f7f4", "#0f5a3c", "#1f9d55"],
+    ["neon", "Ko'k-binafsha neon", "#0a0f2c", "#7c4dff", "#3fa9ff"],
+    ["emerald", "Yashil-oltin", "#04140f", "#12b981", "#f5c542"],
+    ["trophy", "Yashil-oltin kubok", "#03110c", "#1fe0a0", "#f2b632"],
+    ["lux", "Qora-oltin", "#0c0a10", "#e0b04a", "#8b4dff"],
+    ["mtg", "Yashil tog'", "#061a17", "#1fd1a0", "#f2a93b"],
+    ["mtb", "Ko'k tog'", "#071528", "#18d4f0", "#5a6bff"],
+    ["lilac", "Och binafsha", "#f6f2ff", "#7a4be6", "#f59e2b"],
+    ["mint", "Och yashil", "#f2faf6", "#0f7a4f", "#5fd3a0"]
+  ];
+  function setTheme(k) {
+    if (k) document.documentElement.dataset.theme = k; else delete document.documentElement.dataset.theme;
+    if (k) U.store.set("tt_theme", k); else U.store.del("tt_theme");
+    $("themeGrid").querySelectorAll(".theme-opt").forEach(b => b.classList.toggle("on", b.dataset.k === k));
+  }
+  $("themeGrid").innerHTML = THEMES.map(([k, n, bg, a, b]) => `<button type="button" class="theme-opt" data-k="${k}">
+    <span class="sw" style="background:linear-gradient(135deg, ${bg} 0 45%, ${a} 45% 72%, ${b} 72%)"></span><span>${n}</span></button>`).join("");
+  $("themeGrid").querySelectorAll(".theme-opt").forEach(b => b.onclick = () => setTheme(b.dataset.k));
+  $("themeBtn").onclick = () => { closeMenu(); setTheme(document.documentElement.dataset.theme || ""); $("themeBox").classList.remove("hidden"); };
+  $("themeClose").onclick = () => $("themeBox").classList.add("hidden");
+  $("themeBox").onclick = e => { if (e.target === $("themeBox")) $("themeBox").classList.add("hidden"); };
+  // to'lqin ustidagi uchqunlar
+  (function () {
+    const g = document.querySelector(".w-spark"); let h = "";
+    for (let i = 0; i < 70; i++) {
+      const x = Math.random() * 1200, base = 300 - 140 * (x / 1200) + Math.sin(x / 140) * 40;
+      h += `<circle cx="${x.toFixed(0)}" cy="${(base + (Math.random() - .5) * 90).toFixed(0)}" r="${(Math.random() * 1.6 + .4).toFixed(1)}" opacity="${(Math.random() * .7 + .2).toFixed(2)}"/>`;
+    }
+    g.innerHTML = h;
+  })();
 
   start();
 })();

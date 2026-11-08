@@ -1,0 +1,196 @@
+/* =====================================================================
+   FON (mavzular). Bu faylni o'chirsangiz, sayt standart ko'rinishga qaytadi.
+   Har bir mavzu: html[data-theme="..."] — ranglar + bezak (rasm, to'lqin).
+   ===================================================================== */
+
+/* ---------- umumiy: bezak qatlami va tanlash oynasi ---------- */
+.deco { position: fixed; inset: 0; pointer-events: none; z-index: 0; display: none; overflow: hidden; }
+#authView, #appView { position: relative; z-index: 1; }
+.btn.icon { padding: 6px 11px; }
+.card.hero .accent { color: var(--accent, var(--brand)); }
+
+.theme-box { position: fixed; inset: 0; z-index: 90; background: rgba(5, 10, 20, .55); backdrop-filter: blur(4px); display: grid; place-items: center; padding: 16px; }
+.theme-card { width: 100%; max-width: 560px; max-height: 90vh; overflow: auto; background: var(--solid); color: var(--text); border: 1px solid var(--line); border-radius: 20px; padding: 20px; box-shadow: 0 20px 60px rgba(0, 0, 0, .35); }
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.theme-opt { display: flex; flex-direction: column; gap: 8px; padding: 8px; border: 1.5px solid var(--line); border-radius: 14px; background: transparent; color: var(--text); cursor: pointer; text-align: left; font-size: 13px; font-weight: 600; transition: border-color .15s, transform .1s; }
+.theme-opt:hover { border-color: var(--brand-2); transform: translateY(-1px); }
+.theme-opt.on { border-color: var(--brand-2); box-shadow: 0 0 0 3px var(--brand-ring); }
+.theme-opt .sw { display: block; height: 58px; border-radius: 10px; border: 1px solid rgba(127, 127, 127, .25); }
+
+/* ---------- mavzu tanlanganda (barchasi uchun) ---------- */
+html[data-theme] body { background: var(--bg-img, none), var(--bg); background-attachment: fixed; }
+html[data-theme] .deco { display: block; }
+html[data-theme] .auth-wrap { background: transparent; }
+html[data-theme] .sidebar { background: var(--side, var(--panel)); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border-right-color: var(--card-line, var(--line)); }
+html[data-theme] .sidebar .head, html[data-theme] .sidebar .foot { border-color: var(--line); }
+html[data-theme] .card, html[data-theme] .auth-card {
+  background: var(--panel); border-color: var(--card-line, var(--line)); box-shadow: var(--card-glow, var(--shadow));
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+}
+html[data-theme] .nav-item.active { border-color: var(--active-line, var(--brand)); box-shadow: var(--active-glow, none); }
+html[data-theme] .btn.primary { box-shadow: var(--btn-glow, none); }
+html[data-theme] .ring b { color: var(--ring-txt, #c45656); }
+html[data-theme] .ring.pink b { color: var(--ring-txt2, #c43b7f); }
+
+/* rasm (o'ng yuqorida) — faqat bo'sh joy bo'lsa ko'rinadi */
+.deco-hero {
+  position: absolute; top: 26px; right: 26px;
+  width: clamp(150px, calc((100vw - 290px - 780px - 70px) / 2), 430px); aspect-ratio: var(--hero-ar, 16 / 7);
+  background: var(--hero, none) center / contain no-repeat; opacity: var(--hero-op, 1);
+  -webkit-mask-image: var(--hero-mask, radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%));
+          mask-image: var(--hero-mask, radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%));
+}
+@media (max-width: 1240px) { .deco-hero { opacity: calc(var(--hero-op, 1) * .3); } }
+@media (max-width: 820px) { .deco-hero { display: none; } }
+
+/* to'lqinlar (pastda) */
+.deco-waves { position: absolute; left: 290px; right: 0; bottom: 0; width: calc(100% - 290px); height: 40vh; min-height: 220px; display: var(--waves, none); opacity: var(--wave-op, 1); }
+@media (max-width: 820px) { .deco-waves { left: 0; width: 100%; height: 30vh; } }
+.w-s0 { stop-color: var(--w0, #19d3a6); } .w-s1 { stop-color: var(--w1, #f5c542); } .w-s2 { stop-color: var(--w2, #19d3a6); }
+.w-f0 { stop-color: var(--wf, #19d3a6); stop-opacity: var(--wf-op, .22); } .w-f1 { stop-color: var(--wf, #19d3a6); stop-opacity: 0; }
+.w-lines { opacity: var(--line-op, 1); animation: wDrift 22s ease-in-out infinite alternate; }
+.w-spark { fill: var(--w1, #f5c542); opacity: var(--spark, 0); }
+@keyframes wDrift { from { transform: translateX(-24px); } to { transform: translateX(24px); } }
+@media (prefers-reduced-motion: reduce) { .w-lines { animation: none; } }
+
+/* Natijalarim: rangli 3 ta kartochka */
+html[data-theme] .stats.sum .stat { position: relative; overflow: hidden; border-color: color-mix(in srgb, var(--cc) 55%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--cc) 24%, transparent), color-mix(in srgb, var(--cc) 6%, transparent));
+  box-shadow: 0 0 22px color-mix(in srgb, var(--cc) 22%, transparent); }
+html[data-theme] .stats.sum .stat b { color: var(--cc); font-size: 30px; }
+html[data-theme] .stats.sum .stat:nth-child(1) { --cc: var(--c1, var(--brand)); }
+html[data-theme] .stats.sum .stat:nth-child(2) { --cc: var(--c2, var(--brand-2)); }
+html[data-theme] .stats.sum .stat:nth-child(3) { --cc: var(--c3, var(--brand)); }
+
+/* ---------- qorong'i mavzular uchun umumiy tuzatishlar ---------- */
+html.dark { color-scheme: dark; }
+html[data-theme="neon"], html[data-theme="emerald"], html[data-theme="trophy"], html[data-theme="lux"], html[data-theme="mtg"], html[data-theme="mtb"] {
+  --input: rgba(255, 255, 255, .06);
+  --head-bg: transparent;
+  --line-2: rgba(255, 255, 255, .28);
+  --ok-soft: rgba(46, 229, 157, .14); --bad-soft: rgba(255, 107, 138, .14); --warn-soft: rgba(255, 200, 97, .12);
+  --ok: #3fe3a5; --bad: #ff7b93; --warn: #ffc861;
+  --shadow: 0 8px 30px rgba(0, 0, 0, .35); --shadow-hover: 0 10px 34px rgba(0, 0, 0, .45);
+  --ring-txt: #ff9a9a; --ring-txt2: #ff8cc6;
+  color-scheme: dark;
+}
+:is(html[data-theme="neon"], html[data-theme="emerald"], html[data-theme="trophy"], html[data-theme="lux"], html[data-theme="mtg"], html[data-theme="mtb"])
+  :is(.badge.ok, .badge.warn, .badge.bad, .msg.ok, .msg.warn, .msg.err, .explain) { border-color: color-mix(in srgb, currentColor 35%, transparent); }
+:is(html[data-theme="neon"], html[data-theme="emerald"], html[data-theme="trophy"], html[data-theme="lux"], html[data-theme="mtg"], html[data-theme="mtb"])
+  .explain { color: var(--text); }
+:is(html[data-theme="neon"], html[data-theme="emerald"], html[data-theme="trophy"], html[data-theme="lux"], html[data-theme="mtg"], html[data-theme="mtb"])
+  .q-img { background: #fff; }
+
+/* =============== 1. Ko'k-binafsha neon =============== */
+html[data-theme="neon"] {
+  --bg: #080c26;
+  --bg-img: radial-gradient(900px 500px at 85% 0%, rgba(110, 70, 255, .35), transparent 60%), radial-gradient(800px 500px at 10% 100%, rgba(40, 110, 255, .28), transparent 60%);
+  --panel: rgba(22, 28, 72, .7); --panel-2: rgba(255, 255, 255, .05); --solid: #121842; --side: rgba(12, 16, 48, .78); --topbar: rgba(12, 16, 48, .88);
+  --text: #eef0ff; --muted: #9ea6dc; --line: rgba(150, 160, 255, .16);
+  --brand: #7c4dff; --brand-2: #a46bff; --brand-soft: rgba(124, 77, 255, .2); --brand-ring: rgba(164, 107, 255, .35);
+  --brand-grad: linear-gradient(135deg, #8a4dff, #c056ff); --on-brand: #fff; --accent: #c98bff;
+  --card-line: rgba(140, 150, 255, .28); --card-glow: 0 0 0 1px rgba(124, 77, 255, .08), 0 10px 40px rgba(60, 40, 200, .25);
+  --active-glow: 0 0 20px rgba(164, 107, 255, .45); --btn-glow: 0 0 22px rgba(164, 107, 255, .45);
+  --c1: #3b8bff; --c2: #1fd8ad; --c3: #e45ccf;
+  --hero: url(fon/neon.webp); --hero-ar: 355 / 235;
+  --waves: block; --w0: #2a6bff; --w1: #b04bff; --w2: #3fe0ff; --wf: #6a4bff; --spark: .5;
+}
+
+/* =============== 2. Yashil-oltin (oddiy) =============== */
+html[data-theme="emerald"] {
+  --bg: #03130e;
+  --bg-img: radial-gradient(900px 520px at 80% 0%, rgba(20, 160, 110, .28), transparent 60%), radial-gradient(700px 500px at 30% 110%, rgba(20, 150, 100, .22), transparent 60%);
+  --panel: rgba(8, 44, 32, .7); --panel-2: rgba(255, 255, 255, .05); --solid: #0a2a20; --side: rgba(4, 24, 18, .8); --topbar: rgba(4, 24, 18, .9);
+  --text: #eafff5; --muted: #8fbca8; --line: rgba(80, 220, 160, .16);
+  --brand: #e2ac22; --brand-2: #22d39a; --brand-soft: rgba(34, 211, 154, .16); --brand-ring: rgba(34, 211, 154, .3);
+  --brand-grad: linear-gradient(135deg, #f7d26a, #d99a12); --on-brand: #1c1404; --accent: #f5c542;
+  --card-line: rgba(60, 230, 160, .3); --card-glow: 0 0 26px rgba(30, 210, 150, .14);
+  --active-line: #f2c14a; --active-glow: 0 0 18px rgba(242, 193, 74, .4); --btn-glow: 0 0 22px rgba(242, 193, 74, .4);
+  --c1: #22d39a; --c2: #f2b632; --c3: #b05cff;
+}
+
+/* =============== 3. Yashil-oltin kubok =============== */
+html[data-theme="trophy"] {
+  --bg: #020e0a;
+  --bg-img: radial-gradient(900px 520px at 85% -5%, rgba(30, 220, 150, .3), transparent 60%), radial-gradient(900px 400px at 50% 110%, rgba(20, 180, 120, .25), transparent 60%);
+  --panel: rgba(6, 40, 30, .66); --panel-2: rgba(255, 255, 255, .05); --solid: #082a1f; --side: rgba(3, 20, 15, .82); --topbar: rgba(3, 20, 15, .9);
+  --text: #ecfff6; --muted: #92c2ad; --line: rgba(60, 235, 165, .18);
+  --brand: #e7b12a; --brand-2: #1fe0a0; --brand-soft: rgba(31, 224, 160, .16); --brand-ring: rgba(31, 224, 160, .32);
+  --brand-grad: linear-gradient(135deg, #ffe08a, #e0a116); --on-brand: #1c1404; --accent: #f5c542;
+  --card-line: rgba(40, 240, 170, .42); --card-glow: 0 0 0 1px rgba(40, 240, 170, .12), 0 0 32px rgba(30, 220, 150, .2);
+  --active-line: #f5c542; --active-glow: 0 0 22px rgba(245, 197, 66, .45); --btn-glow: 0 0 24px rgba(245, 197, 66, .45);
+  --c1: #1fe0a0; --c2: #f5b833; --c3: #b45cff;
+  --hero: url(fon/trophy.webp); --hero-ar: 640 / 584; --hero-mask: radial-gradient(ellipse 50% 50% at 50% 48%, #000 70%, transparent 100%);
+  --waves: block; --w0: #1fe0a0; --w1: #f5c542; --w2: #1fe0a0; --wf: #13b884; --spark: .8;
+}
+
+/* =============== 4. Qora-oltin (hashamatli) =============== */
+html[data-theme="lux"] {
+  --bg: #0b0910;
+  --bg-img: radial-gradient(800px 500px at 90% 0%, rgba(120, 60, 220, .3), transparent 60%), radial-gradient(700px 400px at 20% 110%, rgba(110, 50, 200, .22), transparent 60%);
+  --panel: rgba(28, 23, 36, .72); --panel-2: rgba(255, 255, 255, .045); --solid: #1a1522; --side: rgba(14, 11, 20, .84); --topbar: rgba(14, 11, 20, .9);
+  --text: #f8f1e4; --muted: #b6aa98; --line: rgba(230, 190, 110, .16);
+  --brand: #e0b04a; --brand-2: #f0c96a; --brand-soft: rgba(224, 176, 74, .16); --brand-ring: rgba(224, 176, 74, .3);
+  --brand-grad: linear-gradient(135deg, #ffe39a, #c9921f); --on-brand: #1d1405; --accent: #f0c96a;
+  --card-line: rgba(230, 190, 110, .3); --card-glow: 0 10px 40px rgba(0, 0, 0, .45);
+  --active-glow: 0 0 18px rgba(240, 201, 106, .35); --btn-glow: 0 0 22px rgba(240, 201, 106, .35);
+  --c1: #a066ff; --c2: #2fd6a2; --c3: #ff7a6b;
+  --hero: url(fon/lux.webp); --hero-ar: 405 / 250;
+  --waves: block; --w0: #f0c96a; --w1: #ffe39a; --w2: #8b4dff; --wf: #6b3fd0; --wf-op: .18; --spark: .6;
+}
+
+/* =============== 5. Yashil-oltin tog' =============== */
+html[data-theme="mtg"] {
+  --bg: #051815;
+  --bg-img: radial-gradient(900px 500px at 85% 0%, rgba(30, 150, 130, .3), transparent 60%), radial-gradient(800px 400px at 60% 110%, rgba(240, 160, 50, .14), transparent 60%);
+  --panel: rgba(10, 46, 42, .7); --panel-2: rgba(255, 255, 255, .05); --solid: #0b2b28; --side: rgba(5, 26, 23, .82); --topbar: rgba(5, 26, 23, .9);
+  --text: #eefcf7; --muted: #95bdb2; --line: rgba(90, 210, 180, .16);
+  --brand: #f2b632; --brand-2: #1fd1a0; --brand-soft: rgba(31, 209, 160, .16); --brand-ring: rgba(31, 209, 160, .3);
+  --brand-grad: linear-gradient(135deg, #ffd56a, #f0a020); --on-brand: #1c1404; --accent: #f5c542;
+  --card-line: rgba(80, 220, 190, .28); --card-glow: 0 0 26px rgba(30, 200, 160, .12);
+  --active-line: #f5c542; --active-glow: 0 0 18px rgba(245, 180, 60, .4); --btn-glow: 0 0 22px rgba(245, 180, 60, .4);
+  --c1: #1fd1a0; --c2: #f2a93b; --c3: #7b6dff;
+  --hero: url(fon/mtg.webp); --hero-ar: 558 / 206;
+  --waves: block; --w0: #1fd1a0; --w1: #f2a93b; --w2: #f5c542; --wf: #1fb08a; --line-op: .75;
+}
+
+/* =============== 6. Ko'k tog' =============== */
+html[data-theme="mtb"] {
+  --bg: #061327;
+  --bg-img: radial-gradient(900px 500px at 85% 0%, rgba(40, 120, 230, .32), transparent 60%), radial-gradient(800px 400px at 50% 110%, rgba(20, 200, 240, .2), transparent 60%);
+  --panel: rgba(12, 34, 64, .7); --panel-2: rgba(255, 255, 255, .05); --solid: #0d2443; --side: rgba(6, 20, 40, .82); --topbar: rgba(6, 20, 40, .9);
+  --text: #ecf7ff; --muted: #9bb8d4; --line: rgba(90, 190, 255, .16);
+  --brand: #18d4f0; --brand-2: #5ce8ff; --brand-soft: rgba(24, 212, 240, .16); --brand-ring: rgba(92, 232, 255, .3);
+  --brand-grad: linear-gradient(135deg, #5ef0ff, #12b6e0); --on-brand: #032430; --accent: #5ce8ff;
+  --card-line: rgba(90, 210, 255, .3); --card-glow: 0 0 28px rgba(24, 180, 240, .15);
+  --active-glow: 0 0 20px rgba(92, 232, 255, .4); --btn-glow: 0 0 22px rgba(92, 232, 255, .4);
+  --c1: #2e9bff; --c2: #19d3a6; --c3: #8b7bff;
+  --hero: url(fon/mtb.webp); --hero-ar: 588 / 190;
+  --waves: block; --w0: #12b6e0; --w1: #5ce8ff; --w2: #5a6bff; --wf: #1a7fe0; --line-op: .8;
+}
+
+/* =============== 7. Och binafsha (yorug') =============== */
+html[data-theme="lilac"] {
+  --bg: #f6f2ff;
+  --bg-img: radial-gradient(900px 500px at 85% 0%, rgba(160, 120, 255, .25), transparent 60%), radial-gradient(800px 500px at 20% 110%, rgba(255, 180, 120, .25), transparent 60%);
+  --panel: rgba(255, 255, 255, .8); --panel-2: #f6f1ff; --solid: #fff; --side: rgba(255, 255, 255, .78); --topbar: rgba(255, 255, 255, .9);
+  --text: #1e1640; --muted: #6f6790; --line: #e8def9; --line-2: #d3c3f5;
+  --brand: #6d3fe0; --brand-2: #8a5cf6; --brand-soft: #efe8ff; --brand-ring: rgba(138, 92, 246, .22);
+  --brand-grad: linear-gradient(135deg, #8a5cf6, #6d3fe0); --on-brand: #fff; --accent: #6d3fe0;
+  --card-line: #ece3fb; --card-glow: 0 10px 34px rgba(110, 70, 220, .1);
+  --c1: #8a5cf6; --c2: #2fbf7a; --c3: #f59e2b;
+  --hero: url(fon/lilac.webp); --hero-ar: 505 / 228;
+  --waves: block; --w0: #b79bff; --w1: #ffc49a; --w2: #b79bff; --wf: #a07cff; --wf-op: .3; --line-op: .35;
+}
+
+/* =============== 8. Och yashil / mint (yorug') =============== */
+html[data-theme="mint"] {
+  --bg: #f1faf5;
+  --bg-img: radial-gradient(900px 500px at 85% 0%, rgba(80, 200, 150, .18), transparent 60%), radial-gradient(800px 500px at 90% 110%, rgba(80, 200, 150, .2), transparent 60%);
+  --panel: rgba(255, 255, 255, .86); --solid: #fff; --side: rgba(255, 255, 255, .82); --topbar: rgba(255, 255, 255, .92);
+  --brand: #0f7a4f; --brand-2: #19a56b; --accent: #0f7a4f;
+  --card-line: #e1f0e8; --card-glow: 0 10px 30px rgba(15, 122, 79, .08);
+  --c1: #19a56b; --c2: #2fbf7a; --c3: #f59e2b;
+  --hero: url(fon/mint.webp); --hero-ar: 400 / 172;
+  --waves: block; --w0: #8fdcb8; --w1: #bdeccf; --w2: #8fdcb8; --wf: #5fd3a0; --wf-op: .28; --line-op: .3;
+}
